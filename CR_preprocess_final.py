@@ -130,10 +130,10 @@ def impute_data(df):
 
     output = ['po_sx_readmission','sx_po_stay','comp_score']   
 
-    list_out(missing_as_value)
-    list_out(not_missing_at_random)
-    list_out(impute_mean)
-    list_out(impute_mode)
+    # list_out(missing_as_value)
+    # list_out(not_missing_at_random)
+    # list_out(impute_mean)
+    # list_out(impute_mode)
 
     df.comp_score.replace(1,1,inplace=True)    
     df.comp_score.replace(2,1,inplace=True)
