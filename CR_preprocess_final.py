@@ -17,11 +17,11 @@ from itertools import cycle
 def split_eras():
     df = pd.read_pickle('S:\ERAS\cr_df.pickle')
     df_all = pd.read_pickle('S:\ERAS\cr_preprocess.pickle')
-    print('df_all shape: {}'.format(df_all.shape))
+    # print('df_all shape: {}'.format(df_all.shape))
     df = df[['patient_id','sx_admission_date_a']]
     df = df[df.sx_admission_date_a.notnull()]
-    print(df[pd.isnull(df.sx_admission_date_a)].shape)
-    print(df.shape)
+    # print(df[pd.isnull(df.sx_admission_date_a)].shape)
+    # print(df.shape)
 
     df_all = pd.merge(df_all,df,how='inner',on='patient_id')
     df_all = df_all[pd.notnull(df_all.sx_admission_date_a)]
@@ -55,15 +55,15 @@ def split_eras():
     eras = df_all[df_all.sx_admission_date_a>=eras_dt]
     non_eras = df_all[df_all.sx_admission_date_a<eras_dt]
 
-    print(non_eras.head())
+    # print(non_eras.head())
     dups = [70,647,700,1473]
 
-    print(eras[eras.patient_id.isin(dups)].shape)
-    print(non_eras[non_eras.patient_id.isin(dups)].shape)
+    # print(eras[eras.patient_id.isin(dups)].shape)
+    # print(non_eras[non_eras.patient_id.isin(dups)].shape)
 
-    print('all:{}, eras:{}, non_eras:{}'.format(df_all.shape,eras.shape,non_eras.shape))
+    # print('all:{}, eras:{}, non_eras:{}'.format(df_all.shape,eras.shape,non_eras.shape))
 
-    print(eras.head())
+    # print(eras.head())
 
     pd.to_pickle(eras,'S:\ERAS\cr_eras.pickle')
     pd.to_pickle(non_eras,'S:\ERAS\cr_non_eras.pickle')
@@ -107,8 +107,13 @@ def reg_data(process,df):
             num_of_values = range(4)
         else:
             pass
-        
+
+            # print(df_reshaped_df.shape)
+            # print(df_reshaped_df)
         df_onehot = process.fit_transform(reshaped_df)
+
+            # print(df[df.isnull()])
+       
         df_onehot = pd.DataFrame(df_onehot.toarray())
 
         col_list = []
@@ -178,6 +183,20 @@ def impute_data(df):
     df[impute_mode] = impute_df('most_frequent',df[impute_mode])
 
     df = df.drop(['patient_id','hba1c_value','sx_admission_date_a'],1) #removes extra rows
+
+    # test = df[missing_as_value]
+    # for col in test:
+    #     nana = test[col][test[col].isnull()]
+    #     print(col,nana.shape)
+
+    # print(test.sx_facility.unique())
+    # print(test[test.surgery_mode.isnull()].shape)
+    # print(test)
+    # print(test.shape)
+    # print(test.surgery_mode.unique())
+    df.surgery_mode.fillna(8,inplace=True)
+    df.sx_facility.fillna(3,inplace=True)
+
 
     # print(df.cea_value)
 
@@ -334,6 +353,7 @@ df_non_eras = pd.read_pickle('S:\ERAS\cr_non_eras.pickle')
 
 
 #runs imputation for eras and non-eras
+
 eras_X, eras_y_readmit, eras_y_los, eras_y_comp, eras_cols, eras_X_comp, eras_y_only_comp, eras_X_readmit, eras_y_only_readmit = impute_data(df_eras)
 non_eras_X, non_eras_y_readmit, non_eras_y_los, non_eras_y_comp, non_eras_cols, non_eras_X_comp, non_eras_y_only_comp, non_eras_X_readmit, non_eras_y_only_readmit = impute_data(df_non_eras)
 
