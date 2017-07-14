@@ -28,8 +28,8 @@ def split_eras():
     eras_dt = datetime.datetime(2014,7,1,0,0) #date at which ERAS began
 
 
-    #plotting out data distributions
-    #reruns is error and stores columns with error in pickle file
+    # # plotting out data distributions
+    # # reruns is error and stores columns with error in pickle file
     # ignore = []
     # error = False
     # for i in df_all.columns:        
@@ -55,15 +55,7 @@ def split_eras():
     eras = df_all[df_all.sx_admission_date_a>=eras_dt]
     non_eras = df_all[df_all.sx_admission_date_a<eras_dt]
 
-    # print(non_eras.head())
     dups = [70,647,700,1473]
-
-    # print(eras[eras.patient_id.isin(dups)].shape)
-    # print(non_eras[non_eras.patient_id.isin(dups)].shape)
-
-    # print('all:{}, eras:{}, non_eras:{}'.format(df_all.shape,eras.shape,non_eras.shape))
-
-    # print(eras.head())
 
     pd.to_pickle(eras,'S:\ERAS\cr_eras.pickle')
     pd.to_pickle(non_eras,'S:\ERAS\cr_non_eras.pickle')
@@ -108,12 +100,7 @@ def reg_data(process,df):
         else:
             pass
 
-            # print(df_reshaped_df.shape)
-            # print(df_reshaped_df)
-        df_onehot = process.fit_transform(reshaped_df)
-
-            # print(df[df.isnull()])
-       
+        df_onehot = process.fit_transform(reshaped_df)   
         df_onehot = pd.DataFrame(df_onehot.toarray())
 
         col_list = []
@@ -165,13 +152,8 @@ def impute_data(df):
     df.sx_diversion.replace(17,1,inplace=True) #colostomy
     df.sx_diversion.replace(18,2,inplace=True) #ileostomy
 
-    # print(not_missing_at_random)
     for col in not_missing_at_random:
         df[col].fillna(0,inplace=True)
-    # df.cea_value.fillna(0,inplace=True)
-    # print(df[not_missing_at_random])
-    # df[not_missing_at_random].fillna(0,inplace=True)
-
 
     df.primary_dx.fillna(df.primary_dx.max()+1,inplace=True)
     df.second_dx.fillna(df.second_dx.max()+1,inplace=True)
@@ -184,31 +166,15 @@ def impute_data(df):
 
     df = df.drop(['patient_id','hba1c_value','sx_admission_date_a'],1) #removes extra rows
 
-    # test = df[missing_as_value]
-    # for col in test:
-    #     nana = test[col][test[col].isnull()]
-    #     print(col,nana.shape)
-
-    # print(test.sx_facility.unique())
-    # print(test[test.surgery_mode.isnull()].shape)
-    # print(test)
-    # print(test.shape)
-    # print(test.surgery_mode.unique())
     df.surgery_mode.fillna(8,inplace=True)
     df.sx_facility.fillna(3,inplace=True)
 
-
-    # print(df.cea_value)
-
     enc = preprocessing.OneHotEncoder()
-    # print(df[missing_as_value].head())
     df_reg = reg_data(enc,df[missing_as_value])
 
     missing_as_value = list(df_reg.columns)
-    # print(missing_as_value)
-    # return
+
     df = pd.concat([df,df_reg],1)
-    # print('test')
 
     df_input = df[not_missing_at_random+missing_as_value+impute_mean+impute_mode]
     df_output = df[output]
@@ -323,12 +289,12 @@ def cross_validate(max_depth,min_samples_leaf,X,y,multiclass,group_name):
 
     return accuracy
 
-def build_a_tree(max_depth,min_samples_leaf,X,y,features,file_out):
+def build_a_tree(max_depth,min_samples_leaf,X,y,features,path,file):
     clf = tree.DecisionTreeClassifier(max_depth=max_depth,min_samples_leaf=min_samples_leaf)
     clf = clf.fit(X,y)
     dot_data = tree.export_graphviz(clf,out_file=None,feature_names=features,filled=False,rounded=True,proportion=True, rotate=True)
     graph = pydotplus.graph_from_dot_data(dot_data)
-    graph.write_pdf(file_out)
+    graph.write_pdf(path+file)
 
 def compare_groups(max_depth, min_sample_leaf, X_eras, y_eras, X_non, y_non, eras_X_data, eras_y_data, non_X_data, non_y_data):
     clf = tree.DecisionTreeClassifier(max_depth=max_depth,min_samples_leaf=min_sample_leaf)
@@ -380,7 +346,7 @@ print('Non-ERAS Complications')
 cv_non_eras_comp = cross_validate(max_depth,min_samples_leaf,non_eras_X,non_eras_y_comp,multiclass=True,group_name='Non-ERAS')
 
 #runs build a tree function, which uses the decision tree classifer to build trees for each of the models
-build_a_tree(max_depth,min_samples_leaf,eras_X,eras_y_readmit,eras_cols,'DT_ERAS_readmit.pdf')
-build_a_tree(max_depth,min_samples_leaf,eras_X,eras_y_comp,eras_cols,'DT_ERAS_comp.pdf')
-build_a_tree(max_depth,min_samples_leaf,non_eras_X,non_eras_y_readmit,non_eras_cols,'DT_non_eras_readmit.pdf')
-build_a_tree(max_depth,min_samples_leaf,non_eras_X,non_eras_y_comp,non_eras_cols,'DT_non_eras_comp.pdf')
+build_a_tree(max_depth,min_samples_leaf,eras_X,eras_y_readmit,eras_cols,path='S:\\ERAS\\DTs\\',file='DT_ERAS_readmit.pdf')
+build_a_tree(max_depth,min_samples_leaf,eras_X,eras_y_comp,eras_cols,path='S:\\ERAS\\DTs\\',file='DT_ERAS_comp.pdf')
+build_a_tree(max_depth,min_samples_leaf,non_eras_X,non_eras_y_readmit,non_eras_cols,path='S:\\ERAS\\DTs\\',file='DT_non_eras_readmit.pdf')
+build_a_tree(max_depth,min_samples_leaf,non_eras_X,non_eras_y_comp,non_eras_cols,path='S:\\ERAS\\DTs\\',file='DT_non_eras_comp.pdf')
