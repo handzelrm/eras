@@ -206,8 +206,9 @@ def impute_data(df):
 
     missing_as_value = list(df_reg.columns)
     # print(missing_as_value)
-    return
+    # return
     df = pd.concat([df,df_reg],1)
+    # print('test')
 
     df_input = df[not_missing_at_random+missing_as_value+impute_mean+impute_mode]
     df_output = df[output]
@@ -353,7 +354,7 @@ df_non_eras = pd.read_pickle('S:\ERAS\cr_non_eras.pickle')
 
 
 #runs imputation for eras and non-eras
-
+print(df_eras.shape)
 eras_X, eras_y_readmit, eras_y_los, eras_y_comp, eras_cols, eras_X_comp, eras_y_only_comp, eras_X_readmit, eras_y_only_readmit = impute_data(df_eras)
 non_eras_X, non_eras_y_readmit, non_eras_y_los, non_eras_y_comp, non_eras_cols, non_eras_X_comp, non_eras_y_only_comp, non_eras_X_readmit, non_eras_y_only_readmit = impute_data(df_non_eras)
 
