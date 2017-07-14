@@ -116,6 +116,11 @@ def reg_data(process,df):
       
     return df
 
+def list_out(list_of_items):
+    print('### ')
+    for i in list_of_items:
+        print('- '+i)
+
 def impute_data(df):
     missing_as_value = ['primary_dx','race','second_dx','sex','ethnicity','ho_smoking','sx_diagnosis','sx_facility','surgery_mode'] #set max+1
     not_missing_at_random = ['currenct_medtreatment___14','currenct_medtreatment___15','currenct_medtreatment___16','currenct_medtreatment___17','currenct_medtreatment___18','currenct_medtreatment___19','currenct_medtreatment___20','currenct_medtreatment___21','currenct_medtreatment___22','currenct_medtreatment___23','med_condition___1','med_condition___10','med_condition___11','med_condition___12','med_condition___13','med_condition___2','med_condition___3','med_condition___4','med_condition___5','med_condition___6','med_condition___7','med_condition___8','med_condition___9','cea_value','crp_value','no_ab_sx','no_total_attacks','sx_diversion','surgeon_a___1','surgeon_a___2','surgeon_a___3','surgeon_a___4','surgeon_a___5',] #set to default 0
@@ -123,16 +128,18 @@ def impute_data(df):
     impute_mode = ['sx_score','asa_class'] #imput mode
     #impute zero: cea_value, crp_value
 
-    output = ['po_sx_readmission','sx_po_stay','comp_score']    
+    output = ['po_sx_readmission','sx_po_stay','comp_score']   
 
-    # print(df[missing_as_value].head())
+    list_out(missing_as_value)
+    list_out(not_missing_at_random)
+    list_out(impute_mean)
+    list_out(impute_mode)
 
     df.comp_score.replace(1,1,inplace=True)    
     df.comp_score.replace(2,1,inplace=True)
-    df.comp_score.replace(3,2,inplace=True)        
-    df.comp_score.replace(4,3,inplace=True)
-    df.comp_score.replace(5,3,inplace=True)
-
+    df.comp_score.replace(3,1,inplace=True)        
+    df.comp_score.replace(4,1,inplace=True)
+    df.comp_score.replace(5,1,inplace=True)
 
 
     #unique values of smoking are 14,15,16,17,18,19 #replacing with 0-6 with 6 being nan
@@ -197,7 +204,7 @@ def impute_data(df):
     return X, y_readmit, y_los, y_comp, y_cols, X_comp, y_only_comp, X_readmit, y_only_readmit
 
 def cross_validate(max_depth,min_samples_leaf,X,y,multiclass,group_name):
-    splits = 10
+    splits = 5
     cv = StratifiedKFold(n_splits=splits)
     # classifier = svm.SVC(probability=True)
     # classifier = RandomForestClassifier()
@@ -255,7 +262,7 @@ def cross_validate(max_depth,min_samples_leaf,X,y,multiclass,group_name):
                 plt.plot(fpr_class[j][i],tpr_class[j][i],lw=lw, color=color, label = 'ROC fold {} (area={})'.format(i,round(auc_class[j][i],2))) #plots a single cv roc
                 mean_tpr += interp(mean_fpr,fpr_class[j][i],tpr_class[j][i])
             mean_tpr[0] = 0.0
-            mean_tpr /= 10
+            mean_tpr /= splits
             mean_tpr[-1] = 1.0
             mean_auc = auc(mean_fpr, mean_tpr)
             plt.plot(mean_fpr, mean_tpr, color='g', linestyle='--',label='Mean ROC (area = {})'.format(round(mean_auc,2)), lw=lw)
