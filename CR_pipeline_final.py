@@ -861,17 +861,17 @@ run_pipeline function
     -runs all functions in pipeline
 """
 def run_pipeline():
-    # load_and_pickle('S:\ERAS\CR_all.xlsx')
-    # pickle_comp()
-    # sx_complications()
-    # pickle_comp_dict()
-    # max_complication()
-    # pickle_surgeries()
-    # pickle_sx_dict()
-    # create_sx_dict()
-    # organize_sx()
-    # pickle_demographics()
-    # organize_demographics()
+    load_and_pickle('S:\ERAS\CR_all.xlsx')
+    pickle_comp()
+    sx_complications()
+    pickle_comp_dict()
+    max_complication()
+    pickle_surgeries()
+    pickle_sx_dict()
+    create_sx_dict()
+    organize_sx()
+    pickle_demographics()
+    organize_demographics()
     readmit_los()
     combine_all()
 
