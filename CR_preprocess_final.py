@@ -30,26 +30,26 @@ def split_eras():
 
     # # plotting out data distributions
     # # reruns is error and stores columns with error in pickle file
-    # ignore = []
-    # error = False
-    # for i in df_all.columns:        
-    #     try:
-    #         ignore = list(pd.read_pickle('S:\ERAS\ignore_plt.pickle'))
-    #     except:
-    #         error = True
-    #     if i not in ignore:
-    #         try:
-    #             n, bins, patches = plt.hist(df_all[i].dropna())
-    #             plt.axvline(df_all[i].dropna().mean(),color='b',linestyle='dashed',linewidth=2)
-    #             plt.axvline(df_all[i].dropna().median(),color='g',linestyle='dashed',linewidth=2)
-    #             plt.title(i)
-    #             plt.show()
-    #         except:
-    #             error = True
-    #             ignore.append(i)
-    # if error == True:
-    #     pd.to_pickle(ignore,'S:\ERAS\ignore_plt.pickle')
-    #     split_eras()
+    ignore = []
+    error = False
+    for i in df_all.columns:        
+        try:
+            ignore = list(pd.read_pickle('S:\ERAS\ignore_plt.pickle'))
+        except:
+            error = True
+        if i not in ignore:
+            try:
+                n, bins, patches = plt.hist(df_all[i].dropna())
+                plt.axvline(df_all[i].dropna().mean(),color='b',linestyle='dashed',linewidth=2)
+                plt.axvline(df_all[i].dropna().median(),color='g',linestyle='dashed',linewidth=2)
+                plt.title(i)
+                plt.show()
+            except:
+                error = True
+                ignore.append(i)
+    if error == True:
+        pd.to_pickle(ignore,'S:\ERAS\ignore_plt.pickle')
+        split_eras()
     
 
     eras = df_all[df_all.sx_admission_date_a>=eras_dt]
@@ -138,8 +138,8 @@ def impute_data(df):
     df.comp_score.replace(1,1,inplace=True)    
     df.comp_score.replace(2,1,inplace=True)
     df.comp_score.replace(3,1,inplace=True)        
-    df.comp_score.replace(4,1,inplace=True)
-    df.comp_score.replace(5,1,inplace=True)
+    df.comp_score.replace(3,1,inplace=True)
+    df.comp_score.replace(3,1,inplace=True)
 
 
     #unique values of smoking are 14,15,16,17,18,19 #replacing with 0-6 with 6 being nan
@@ -204,7 +204,7 @@ def impute_data(df):
     return X, y_readmit, y_los, y_comp, y_cols, X_comp, y_only_comp, X_readmit, y_only_readmit
 
 def cross_validate(max_depth,min_samples_leaf,X,y,multiclass,group_name):
-    splits = 5
+    splits = 10
     cv = StratifiedKFold(n_splits=splits)
     # classifier = svm.SVC(probability=True)
     # classifier = RandomForestClassifier()
