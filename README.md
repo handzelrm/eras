@@ -1,5 +1,20 @@
 # Enhanced Recovery After Surgery (ERAS) Project
 
+##Questions
+- Altemeier
+- Delorme
+- Resection with rectopexy
+- intestinal bypass
+- stricturoplasty
+- anastomotic resection
+- ileostomy reversal/takedonw
+- small bowel resection
+
+## To Do
+- fix redundancy with transpose
+- finish updating the surgery groups once questions are anwsered
+- update processing to change surgeries from ranks to categories
+
 ## Data Inputs
 ### Impute missing as value
 - primary_dx
