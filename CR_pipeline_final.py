@@ -20,7 +20,7 @@ import re
 
 
 def running_fxn(splits,percent):
-    """Prints the percentage complete and takes nput splits and precentage"""
+    """Prints the percentage complete and takes input splits and precentage"""
     print('0%|'+'#'*int(percent/(100/splits))+' '*int((100-percent)/(100/splits))+'|100%')
 
 
@@ -863,7 +863,7 @@ run_pipeline function
     run_pipeline()
     -runs all functions in pipeline
 """
-def run_pipeline():
+def main():
     load_and_pickle('S:\ERAS\CR_all.xlsx')
     pickle_comp()
     sx_complications()
@@ -878,7 +878,8 @@ def run_pipeline():
     readmit_los()
     combine_all()
 
-run_pipeline()
+if __name__ == '__main__':
+	main()
 
 # load_and_pickle('S:\ERAS\CR_all.xlsx')
 # pickle_comp()
