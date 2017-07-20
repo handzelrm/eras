@@ -273,6 +273,11 @@ def pickle_surgeries():
     pd.to_pickle(df_surgery_all,'S:\ERAS\cr_sx_all.pickle')
 
 def organize_sx():
+    """
+    Looks at cr_sx_all and sx_list_dict_comp pickles to determine surgical score.
+
+    :returns: surgical score file
+    """
     print('organize_sx function is running...')
     df = pd.read_pickle('S:\ERAS\cr_sx_all.pickle')
     df_sx_dict_comp = pd.read_pickle('S:\\ERAS\sx_list_dict_comp.pickle')
@@ -365,7 +370,12 @@ create_sx_dict function:
   -outputs a file with column name, surgical score, description, unique name, unique code/number    
 """
 def create_sx_dict():
-    df = pd.read_excel('S:\ERAS\sx_list_imput.xlsx')
+    """
+    Takes data from a list of surgery names and addes the appropriate numbers to form all unique headers
+
+    :returns: sx_list_dict_comp xlsx and pickle file. These files will act as a mapping dictionary with header names, surgery group (score), description and associated code to unify list.
+    """
+    df = pd.read_excel('S:\ERAS\sx_list_input.xlsx')
     main_output = [] #will be column name in CR database
     description_output = [] #description of column
     score = []
