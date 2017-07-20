@@ -303,54 +303,126 @@ def organize_sx():
     sx_cnt_list = []
     sx_score_list = []
 
-    cnt=0
-    for patient in pt_list:
+    group_dict = {1:[],2:[],3:[],4:[]}
+
+
+    # cnt=0
+    for cnt_all,patient in enumerate(pt_list):
         df_pt = df[df.patient_id==patient] #pt specific df
         df_pt = df_pt.ix[:,df_pt.columns!='patient_id'].dropna(how='all') #drops rows that have all nan values
         df_pt = df_pt.replace(0,np.NaN)
         sx_list = df_pt.columns[pd.notnull(df_pt).sum()>0].tolist()
 
-        cnt += 1
-        score = [-1]
+        # cnt += 1
+        # score = [-1]
 
+        # if the patient did not have any surgeries skip
         if df_pt.shape[0]==0:
             pass
+
+        # if only one surgery row
         elif df_pt.shape[0]==1:
-            for sx in df_pt.items():
+
+            #loops through each surgery
+            group_cnt= {1:0,2:0,3:0,4:0}
+            for cnt, sx in enumerate(df_pt.items()):
+                # print(cnt)
+                
+                
+                
+
                 if sx[1].values[0]==1: #if the sx column has a value of 1 meaning it happened
-                    #comb_service are not in dictionary and will throw an error
-                    try: 
-                        score.append(df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0]) #finds match in name column of df and returns the score value (an array) and takes the 1st value (only one)
+                    try:
+                        score = df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0] #surgical score which will correlate to groupby
                     except:
-                        #print('sx_col{}'.format(sx[0]))  
-                        #non_listed_sx.append(sx[0]) #will give a list of non_listed_sx from dict
-                        pass        
+                        score = -1
+
+                    if score == 1 and group_cnt[1] != 1:
+                        group_dict[1].append(1)
+                        group_cnt[1] = 1
+                    elif score == 2 and group_cnt[2] != 1:
+                        group_dict[2].append(1)
+                        group_cnt[2] = 1
+                    elif score == 3 and group_cnt[3] != 1:
+                        group_dict[3].append(1)
+                        group_cnt[3] = 1
+                    elif score == 4 and group_cnt[4] != 1:
+                        group_dict[4].append(1)
+                        group_cnt[4] = 1
+                    elif score == -1:
+                        pass
+
+            for i in group_cnt:
+            	if group_cnt[i] == 0:
+            		group_dict[i].append(0)
+
+
+
+                    #comb_service are not in dictionary and will throw an error
+                    # try: 
+                    #     score.append(df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0]) #finds match in name column of df and returns the score value (an array) and takes the 1st value (only one)
+                    # except:
+                    #     #print('sx_col{}'.format(sx[0]))  
+                    #     #non_listed_sx.append(sx[0]) #will give a list of non_listed_sx from dict
+                    #     pass        
         #will just take the first operation for now
         elif df_pt.shape[0]==2:
+            group_cnt= {1:0,2:0,3:0,4:0}
+
             df_pt = df_pt.iloc[[0]]
-            for sx in df_pt.items():
+            for cnt, sx in enumerate(df_pt.items()):
                 if sx[1].values[0]==1: #if the sx column has a value of 1 meaning it happened
                     #comb_service are not in dictionary and will throw an error
-                    try: 
-                        score.append(df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0]) #finds match in name column of df and returns the score value (an array) and takes the 1st value (only one)
-                    except:
-                        #print('sx_col{}'.format(sx[0]))  
-                        #non_listed_sx.append(sx[0]) #will give a list of non_listed_sx from dict
-                        pass
+                   
+
+                    score = df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0] #surgical score which will correlate to groupby
+
+
+                    if score == 1 and group_cnt[1] != 1:
+                        group_dict[1].append(1)
+                        group_cnt[1] = 1
+                    elif score == 2 and group_cnt[2] != 1:
+                        group_dict[2].append(1)
+                        group_cnt[2] = 1
+                    elif score == 3 and group_cnt[3] != 1:
+                        group_dict[3].append(1)
+                        group_cnt[3] = 1
+                    elif score == 4 and group_cnt[4] != 1:
+                        group_dict[4].append(1)
+                        group_cnt[4] = 1
+                    elif score == -1:
+                    	pass
+
+            for i in group_cnt:
+                if group_cnt[i] == 0:
+                    group_dict[i].append(0)
+                    
+                    # try: 
+                    #     score.append(df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0]) #finds match in name column of df and returns the score value (an array) and takes the 1st value (only one)
+                    # except:
+                    #     #print('sx_col{}'.format(sx[0]))  
+                    #     #non_listed_sx.append(sx[0]) #will give a list of non_listed_sx from dict
+                    #     pass
             #print('rows:{} pt:{}'.format(df_pt.shape[0],patient)) #if more than 2 rows for a pt
 
         else:
             print('More than 2 rows')
                   
-        if round(cnt/num_of_pts*100) != percentage:
-            percentage = round(cnt/num_of_pts*100)
+        if round(cnt_all/num_of_pts*100) != percentage:
+            percentage = round(cnt_all/num_of_pts*100)
             if percentage in range(0,101,5):
                 print('{}% complete'.format(percentage))
         
-        sx_score = np.max(score)
-        sx_score_list.append(sx_score)
+        # sx_score = np.max(score)
+        # sx_score_list.append(sx_score)
     
-    df_sx_score = pd.DataFrame({'patient_id':pt_list,'sx_score':sx_score_list})
+    # df_sx_score = pd.DataFrame({'patient_id':pt_list,'sx_score':sx_score_list})
+
+    print(len(pt_list), end=' ')
+    for i in group_dict:
+    	print(len(group_dict[i]),end=' ')
+
+    df_sx_score = pd.DataFrame({'patient_id':pt_list,'group_1':group_dict[1],'group_2':group_dict[2],'group_3':group_dict[3],'group_4':group_dict[4]})
     pd.to_pickle(df_sx_score,'S:\ERAS\df_sx_score.pickle')
 
 def pickle_sx_dict():
@@ -874,19 +946,19 @@ run_pipeline function
     -runs all functions in pipeline
 """
 def main():
-    load_and_pickle('S:\ERAS\CR_all.xlsx')
-    pickle_comp()
-    sx_complications()
-    pickle_comp_dict()
-    max_complication()
-    pickle_surgeries()
-    pickle_sx_dict()
-    create_sx_dict()
+    # load_and_pickle('S:\ERAS\CR_all.xlsx')
+    # pickle_comp()
+    # sx_complications()
+    # pickle_comp_dict()
+    # max_complication()
+    # pickle_surgeries()
+    # pickle_sx_dict()
+    # create_sx_dict()
     organize_sx()
-    pickle_demographics()
-    organize_demographics()
-    readmit_los()
-    combine_all()
+    # pickle_demographics()
+    # organize_demographics()
+    # readmit_los()
+    # combine_all()
 
 if __name__ == '__main__':
 	main()
