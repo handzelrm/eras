@@ -454,10 +454,28 @@ def create_sx_dict():
     unique_list = [] #unique names
     unique_code = [] #unique codes for each procedure
 
-    df_unique = pd.read_excel('S:\ERAS\CR_unique_dict.xlsx')
-    # procedure_dict = df_unique.to_dict(orient='index')[0]
+    temp_df = pd.read_excel('S:\ERAS\surgery_group_assigment.xlsx')
+    temp_df = temp_df.T
+    temp_df.to_excel('S:\ERAS\surgery_group_assigment_transposed.xlsx',index=False,header=False)
+    df_unique = pd.read_excel('S:\ERAS\surgery_group_assigment_transposed.xlsx')
+
+    # df_unique = pd.read_excel('S:\ERAS\CR_unique_dict.xlsx')
+    # # procedure_dict = df_unique.to_dict(orient='index')[0]
+    # # print('part1')
+    # print(df_unique.head())
     procedure_dict = df_unique.to_dict()
-    # procedure_dict = {'APR':'abdominal perineal resection'}
+    # # procedure_dict = {'APR':'abdominal perineal resection'}
+
+    # # print('part2')
+    # df_unique = pd.read_excel('S:\ERAS\surgery_group_assigment.xlsx')
+    # df_unique = df_unique.T
+    # new_header = df_unique.iloc[0].values
+    # df_unique = df_unique[1:]
+    # df_unique.rename(columns = new_header)
+    # print(new_header)
+    # print(df_unique.head())
+
+    # return
 
     #iterate over all rows
     for row in df.iterrows():
@@ -953,8 +971,8 @@ def main():
     # max_complication()
     # pickle_surgeries()
     # pickle_sx_dict()
-    # create_sx_dict()
-    organize_sx()
+    create_sx_dict()
+    # organize_sx()
     # pickle_demographics()
     # organize_demographics()
     # readmit_los()
