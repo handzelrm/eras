@@ -1,19 +1,46 @@
 # Enhanced Recovery After Surgery (ERAS) Project
 
 ##Questions
-- Altemeier
-- Delorme
-- Resection with rectopexy
-- intestinal bypass
-- stricturoplasty
-- anastomotic resection
-- ileostomy reversal/takedonw
-- small bowel resection
+- Still have issue with anastomotic resection if not otherwise specified (ignore for now)
 
 ## To Do
 - fix redundancy with transpose
 - finish updating the surgery groups once questions are anwsered
 - update processing to change surgeries from ranks to categories
+
+## Surgery Groups
+### Group 1
+- Diverting Stomas (ileosotmy and colostomy)
+
+### Group 2
+- Segmental Colectomies (right, left, sigmoid, etc.)
+- Small Bowel Resection (and stricturoplasty)
+- Ileostomy Reversal
+- Total Abdominal Colectomy (TAC)
+- Intestinal Bypass
+
+### Group 3
+- LAR
+- Colostomy Reversal
+
+### Group 4
+- TPC /w or /wo IPAA
+- PSG
+- APR
+
+### Excluded
+- Altemeier/Delorme
+- Transanal Procedures
+- Hernia Repairs
+- LOA
+- Omentectomy
+- Enterotomy
+- Treatment of Intrabominal Bleeding
+- Wound Dehiscence Repair
+- Wound Exploration
+- Exploratory Laparotomy
+- Anastomotoic Leak Repair
+- Lavage and Drain Placement
 
 ## Data Inputs
 ### Impute missing as value
