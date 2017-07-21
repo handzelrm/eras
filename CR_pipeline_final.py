@@ -33,46 +33,30 @@ def cr_columns(raw_data):
   ]]
     return df
 
-"""
-load_and_pickle function:
-  load_and_pickle('S:\ERAS\CR_all.xlsx')
-  -loads full colorectal database to pandas df
-  -pickles df to 'S:\ERAS\cr_df.pickle'
-  -should only need to be run to update data
-"""
-def load_and_pickle(path_file):
-  print('load_and_pickle function is running...')
-  raw_data = pd.read_excel(path_file,sheetname='CR_all')
-  df = cr_columns(raw_data)
-  pd.to_pickle(df, 'S:\ERAS\cr_df.pickle')
-
-"""
-pickle_surgeries function:
-  pickle_surgeries()
-  -import the entire eras database from a pickle file
-  -remove any redcap events (rows) that are not needed i.e. followup visits
-  -remove most of the extra columns
-  -pickle file to 'S:\ERAS\cr_sx_all.pickle'
-"""
 def pickle_surgeries():
-  print('pickle_surgeries function is running...')
-  df = pd.read_pickle('S:\ERAS\cr_df.pickle')
-  #redcap events that should be included (rows)
-  redcap_events = ['baseline_arm_1', 'pre_op_visit_dx_1_arm_1', 'surgery_dx_1_arm_1','neo_adjuvant_treat_arm_1','post_op_complicati_arm_1', 'baseline_2_arm_1','pre_op_visit_dx_2_arm_1', 'post_op_complicati_arm_1b','neo_adjuvant_treat_arm_1b']
+    """
+    Takes the colorectal database, removes non surgical rows such as follow up visit and removes extra columns.
 
-  df_surgery_all = df[['sx_admission_date_a','sx_urgency_a','surgery_mode_a',
-  'prim_sx_rectalca_a___7','prim_sx_rectalca_a___8','prim_sx_rectalca_a___9','prim_sx_rectalca_a___10','prim_sx_rectalca_a___25','prim_sx_rectalca_a___11','prim_sx_rectalca_a___31','prim_sx_rectalca_a___30','prim_sx_rectalca_a___13','prim_sx_rectalca_a___14','prim_sx_rectalca_a___15','prim_sx_rectalca_a___27','prim_sx_rectalca_a___24','prim_sx_rectalca_a___16','prim_sx_rectalca_a___17','prim_sx_rectalca_a___18','prim_sx_rectalca_a___19','prim_sx_rectalca_a___28','prim_sx_rectalca_a___29','prim_sx_rectalca_a___20','prim_sx_rectalca_a___21','prim_sx_rectalca_a___22','prim_sx_rectalca_a___23','prim_sx_other_rectalca_a',
-  'prim_sx_rectalpolyp_a___7','prim_sx_rectalpolyp_a___8','prim_sx_rectalpolyp_a___9','prim_sx_rectalpolyp_a___10','prim_sx_rectalpolyp_a___25','prim_sx_rectalpolyp_a___11','prim_sx_rectalpolyp_a___12','prim_sx_rectalpolyp_a___30','prim_sx_rectalpolyp_a___29','prim_sx_rectalpolyp_a___13','prim_sx_rectalpolyp_a___26','prim_sx_rectalpolyp_a___14','prim_sx_rectalpolyp_a___15','prim_sx_rectalpolyp_a___16','prim_sx_rectalpolyp_a___24','prim_sx_rectalpolyp_a___27','prim_sx_rectalpolyp_a___17','prim_sx_rectalpolyp_a___18','prim_sx_rectalpolyp_a___19','prim_sx_rectalpolyp_a___28','prim_sx_rectalpolyp_a___20','prim_sx_rectalpolyp_a___21','prim_sx_rectalpolyp_a___22','prim_sx_rectalpolyp_a___23','prim_sx_other_rectlpolyp_a',
-  'prim_sx_colonca_a___7','prim_sx_colonca_a___8','prim_sx_colonca_a___9','prim_sx_colonca_a___10','prim_sx_colonca_a___11','prim_sx_colonca_a___12','prim_sx_colonca_a___32','prim_sx_colonca_a___13','prim_sx_colonca_a___14','prim_sx_colonca_a___15','prim_sx_colonca_a___16','prim_sx_colonca_a___35','prim_sx_colonca_a___36','prim_sx_colonca_a___34','prim_sx_colonca_a___29','prim_sx_colonca_a___28','prim_sx_colonca_a___17','prim_sx_colonca_a___18','prim_sx_colonca_a___19','prim_sx_colonca_a___27','prim_sx_colonca_a___20','prim_sx_colonca_a___30','prim_sx_colonca_a___21','prim_sx_colonca_a___22','prim_sx_colonca_a___31','prim_sx_colonca_a___23','prim_sx_colonca_a___24','prim_sx_colonca_a___25','prim_sx_colonca_a___26','prim_sx_other_colonca_a',
-  'prim_sx_colonpolyp_a___7','prim_sx_colonpolyp_a___8','prim_sx_colonpolyp_a___9','prim_sx_colonpolyp_a___10','prim_sx_colonpolyp_a___11','prim_sx_colonpolyp_a___12','prim_sx_colonpolyp_a___32','prim_sx_colonpolyp_a___13','prim_sx_colonpolyp_a___14','prim_sx_colonpolyp_a___15','prim_sx_colonpolyp_a___16','prim_sx_colonpolyp_a___33','prim_sx_colonpolyp_a___34','prim_sx_colonpolyp_a___35','prim_sx_colonpolyp_a___29','prim_sx_colonpolyp_a___28','prim_sx_colonpolyp_a___17','prim_sx_colonpolyp_a___18','prim_sx_colonpolyp_a___19','prim_sx_colonpolyp_a___20','prim_sx_colonpolyp_a___30','prim_sx_colonpolyp_a___21','prim_sx_colonpolyp_a___27','prim_sx_colonpolyp_a___22','prim_sx_colonpolyp_a___31','prim_sx_colonpolyp_a___23','prim_sx_colonpolyp_a___24','prim_sx_colonpolyp_a___25','prim_sx_colonpolyp_a___26','prim_sx_other_colonpolyp_a',
-  'prim_sx_bencolon_a___1','prim_sx_bencolon_a___2','prim_sx_bencolon_a___3','prim_sx_bencolon_a___4','prim_sx_bencolon_a___5','prim_sx_bencolon_a___6','prim_sx_bencolon_a___7','prim_sx_bencolon_a___8','prim_sx_bencolon_a___9','prim_sx_bencolon_a___10','prim_sx_bencolon_a___11','prim_sx_bencolon_a___12','prim_sx_bencolon_a___13','prim_sx_bencolon_a___14','prim_sx_bencolon_a___15','prim_sx_bencolon_a___16','prim_sx_bencolon_a___25','prim_sx_bencolon_a___17','prim_sx_bencolon_a___18','prim_sx_bencolon_a___24','prim_sx_bencolon_a___19','prim_sx_bencolon_a___26','prim_sx_bencolon_a___27','prim_sx_bencolon_a___20','prim_sx_bencolon_a___21','prim_sx_bencolon_a___22','prim_sx_bencolon_a___23','prim_sx_other_bencolon_a',
-  'sx_rectopexy_a',
-  'prim_sx_uc_a___1','prim_sx_uc_a___2','prim_sx_uc_a___31','prim_sx_uc_a___3','prim_sx_uc_a___4','prim_sx_uc_a___5','prim_sx_uc_a___24','prim_sx_uc_a___25','prim_sx_uc_a___6','prim_sx_uc_a___7','prim_sx_uc_a___8','prim_sx_uc_a___29','prim_sx_uc_a___9','prim_sx_uc_a___10','prim_sx_uc_a___11','prim_sx_uc_a___22','prim_sx_uc_a___23','prim_sx_uc_a___12','prim_sx_uc_a___13','prim_sx_uc_a___14','prim_sx_uc_a___15','prim_sx_uc_a___26','prim_sx_uc_a___16','prim_sx_uc_a___21','prim_sx_uc_a___27','prim_sx_uc_a___28','prim_sx_uc_a___17','prim_sx_uc_a___18','prim_sx_uc_a___19','prim_sx_uc_a___20','prim_sx_other_uc_a',
-  'prim_sx_ic_a___1','prim_sx_ic_a___2','prim_sx_ic_a___30','prim_sx_ic_a___31','prim_sx_ic_a___3','prim_sx_ic_a___4','prim_sx_ic_a___24','prim_sx_ic_a___25','prim_sx_ic_a___5','prim_sx_ic_a___6','prim_sx_ic_a___7','prim_sx_ic_a___8','prim_sx_ic_a___29','prim_sx_ic_a___9','prim_sx_ic_a___10','prim_sx_ic_a___11','prim_sx_ic_a___22','prim_sx_ic_a___23','prim_sx_ic_a___12','prim_sx_ic_a___13','prim_sx_ic_a___14','prim_sx_ic_a___15','prim_sx_ic_a___26','prim_sx_ic_a___16','prim_sx_ic_a___21','prim_sx_ic_a___27','prim_sx_ic_a___28','prim_sx_ic_a___17','prim_sx_ic_a___18','prim_sx_ic_a___19','prim_sx_ic_a___20','prim_sx_other_ic_a',
-  'prim_sx_cd_a___1','prim_sx_cd_a___2','prim_sx_cd_a___30','prim_sx_cd_a___31','prim_sx_cd_a___3','prim_sx_cd_a___4','prim_sx_cd_a___24','prim_sx_cd_a___25','prim_sx_cd_a___5','prim_sx_cd_a___6','prim_sx_cd_a___7','prim_sx_cd_a___8','prim_sx_cd_a___29','prim_sx_cd_a___9','prim_sx_cd_a___10','prim_sx_cd_a___11','prim_sx_cd_a___22','prim_sx_cd_a___23','prim_sx_cd_a___26','prim_sx_cd_a___12','prim_sx_cd_a___13','prim_sx_cd_a___14','prim_sx_cd_a___15','prim_sx_cd_a___16','prim_sx_cd_a___21','prim_sx_cd_a___27','prim_sx_cd_a___28','prim_sx_cd_a___17','prim_sx_cd_a___18','prim_sx_cd_a___19','prim_sx_cd_a___20','prim_sx_other_cd_a',
-  'sx_multivisc_rxn_a','sx_anastomosis_a','sx_anastamosis_ibd_a','sx_temp_diversion_a','secondary_sx_a___17','secondary_sx_a___18','secondary_sx_a___19','secondary_sx_a___20','secondary_sx_a___21','secondary_sx_a___22','secondary_sx_a___23','secondary_sx_a___24','secondary_sx_a___25','secondary_sx_a___26','secondary_sx_a___27','secondary_sx_a___28','secondary_sx_a___29','secondary_sx_a___30','other_secondary_sx_a','sx_comb_service_a___16','sx_comb_service_a___17','sx_comb_service_a___18','sx_comb_service_a___19','sx_comb_service_a___20','sx_comb_service_a___21','sx_ebl_a','sx_length_a']]
+    :returns: cr_sx_all.pickle
+    """
+    print('pickle_surgeries function is running...')
+    df = pd.read_pickle('S:\ERAS\cr_df.pickle')
+    #redcap events that should be included (rows)
+    redcap_events = ['baseline_arm_1', 'pre_op_visit_dx_1_arm_1', 'surgery_dx_1_arm_1','neo_adjuvant_treat_arm_1','post_op_complicati_arm_1', 'baseline_2_arm_1','pre_op_visit_dx_2_arm_1', 'post_op_complicati_arm_1b','neo_adjuvant_treat_arm_1b']
 
-  pd.to_pickle(df_surgery_all,'S:\ERAS\cr_sx_all.pickle')
+    df_surgery_all = df[['sx_admission_date_a','sx_urgency_a','surgery_mode_a',
+    'prim_sx_rectalca_a___7','prim_sx_rectalca_a___8','prim_sx_rectalca_a___9','prim_sx_rectalca_a___10','prim_sx_rectalca_a___25','prim_sx_rectalca_a___11','prim_sx_rectalca_a___31','prim_sx_rectalca_a___30','prim_sx_rectalca_a___13','prim_sx_rectalca_a___14','prim_sx_rectalca_a___15','prim_sx_rectalca_a___27','prim_sx_rectalca_a___24','prim_sx_rectalca_a___16','prim_sx_rectalca_a___17','prim_sx_rectalca_a___18','prim_sx_rectalca_a___19','prim_sx_rectalca_a___28','prim_sx_rectalca_a___29','prim_sx_rectalca_a___20','prim_sx_rectalca_a___21','prim_sx_rectalca_a___22','prim_sx_rectalca_a___23','prim_sx_other_rectalca_a',
+    'prim_sx_rectalpolyp_a___7','prim_sx_rectalpolyp_a___8','prim_sx_rectalpolyp_a___9','prim_sx_rectalpolyp_a___10','prim_sx_rectalpolyp_a___25','prim_sx_rectalpolyp_a___11','prim_sx_rectalpolyp_a___12','prim_sx_rectalpolyp_a___30','prim_sx_rectalpolyp_a___29','prim_sx_rectalpolyp_a___13','prim_sx_rectalpolyp_a___26','prim_sx_rectalpolyp_a___14','prim_sx_rectalpolyp_a___15','prim_sx_rectalpolyp_a___16','prim_sx_rectalpolyp_a___24','prim_sx_rectalpolyp_a___27','prim_sx_rectalpolyp_a___17','prim_sx_rectalpolyp_a___18','prim_sx_rectalpolyp_a___19','prim_sx_rectalpolyp_a___28','prim_sx_rectalpolyp_a___20','prim_sx_rectalpolyp_a___21','prim_sx_rectalpolyp_a___22','prim_sx_rectalpolyp_a___23','prim_sx_other_rectlpolyp_a',
+    'prim_sx_colonca_a___7','prim_sx_colonca_a___8','prim_sx_colonca_a___9','prim_sx_colonca_a___10','prim_sx_colonca_a___11','prim_sx_colonca_a___12','prim_sx_colonca_a___32','prim_sx_colonca_a___13','prim_sx_colonca_a___14','prim_sx_colonca_a___15','prim_sx_colonca_a___16','prim_sx_colonca_a___35','prim_sx_colonca_a___36','prim_sx_colonca_a___34','prim_sx_colonca_a___29','prim_sx_colonca_a___28','prim_sx_colonca_a___17','prim_sx_colonca_a___18','prim_sx_colonca_a___19','prim_sx_colonca_a___27','prim_sx_colonca_a___20','prim_sx_colonca_a___30','prim_sx_colonca_a___21','prim_sx_colonca_a___22','prim_sx_colonca_a___31','prim_sx_colonca_a___23','prim_sx_colonca_a___24','prim_sx_colonca_a___25','prim_sx_colonca_a___26','prim_sx_other_colonca_a',
+    'prim_sx_colonpolyp_a___7','prim_sx_colonpolyp_a___8','prim_sx_colonpolyp_a___9','prim_sx_colonpolyp_a___10','prim_sx_colonpolyp_a___11','prim_sx_colonpolyp_a___12','prim_sx_colonpolyp_a___32','prim_sx_colonpolyp_a___13','prim_sx_colonpolyp_a___14','prim_sx_colonpolyp_a___15','prim_sx_colonpolyp_a___16','prim_sx_colonpolyp_a___33','prim_sx_colonpolyp_a___34','prim_sx_colonpolyp_a___35','prim_sx_colonpolyp_a___29','prim_sx_colonpolyp_a___28','prim_sx_colonpolyp_a___17','prim_sx_colonpolyp_a___18','prim_sx_colonpolyp_a___19','prim_sx_colonpolyp_a___20','prim_sx_colonpolyp_a___30','prim_sx_colonpolyp_a___21','prim_sx_colonpolyp_a___27','prim_sx_colonpolyp_a___22','prim_sx_colonpolyp_a___31','prim_sx_colonpolyp_a___23','prim_sx_colonpolyp_a___24','prim_sx_colonpolyp_a___25','prim_sx_colonpolyp_a___26','prim_sx_other_colonpolyp_a',
+    'prim_sx_bencolon_a___1','prim_sx_bencolon_a___2','prim_sx_bencolon_a___3','prim_sx_bencolon_a___4','prim_sx_bencolon_a___5','prim_sx_bencolon_a___6','prim_sx_bencolon_a___7','prim_sx_bencolon_a___8','prim_sx_bencolon_a___9','prim_sx_bencolon_a___10','prim_sx_bencolon_a___11','prim_sx_bencolon_a___12','prim_sx_bencolon_a___13','prim_sx_bencolon_a___14','prim_sx_bencolon_a___15','prim_sx_bencolon_a___16','prim_sx_bencolon_a___25','prim_sx_bencolon_a___17','prim_sx_bencolon_a___18','prim_sx_bencolon_a___24','prim_sx_bencolon_a___19','prim_sx_bencolon_a___26','prim_sx_bencolon_a___27','prim_sx_bencolon_a___20','prim_sx_bencolon_a___21','prim_sx_bencolon_a___22','prim_sx_bencolon_a___23','prim_sx_other_bencolon_a',
+    'sx_rectopexy_a',
+    'prim_sx_uc_a___1','prim_sx_uc_a___2','prim_sx_uc_a___31','prim_sx_uc_a___3','prim_sx_uc_a___4','prim_sx_uc_a___5','prim_sx_uc_a___24','prim_sx_uc_a___25','prim_sx_uc_a___6','prim_sx_uc_a___7','prim_sx_uc_a___8','prim_sx_uc_a___29','prim_sx_uc_a___9','prim_sx_uc_a___10','prim_sx_uc_a___11','prim_sx_uc_a___22','prim_sx_uc_a___23','prim_sx_uc_a___12','prim_sx_uc_a___13','prim_sx_uc_a___14','prim_sx_uc_a___15','prim_sx_uc_a___26','prim_sx_uc_a___16','prim_sx_uc_a___21','prim_sx_uc_a___27','prim_sx_uc_a___28','prim_sx_uc_a___17','prim_sx_uc_a___18','prim_sx_uc_a___19','prim_sx_uc_a___20','prim_sx_other_uc_a',
+    'prim_sx_ic_a___1','prim_sx_ic_a___2','prim_sx_ic_a___30','prim_sx_ic_a___31','prim_sx_ic_a___3','prim_sx_ic_a___4','prim_sx_ic_a___24','prim_sx_ic_a___25','prim_sx_ic_a___5','prim_sx_ic_a___6','prim_sx_ic_a___7','prim_sx_ic_a___8','prim_sx_ic_a___29','prim_sx_ic_a___9','prim_sx_ic_a___10','prim_sx_ic_a___11','prim_sx_ic_a___22','prim_sx_ic_a___23','prim_sx_ic_a___12','prim_sx_ic_a___13','prim_sx_ic_a___14','prim_sx_ic_a___15','prim_sx_ic_a___26','prim_sx_ic_a___16','prim_sx_ic_a___21','prim_sx_ic_a___27','prim_sx_ic_a___28','prim_sx_ic_a___17','prim_sx_ic_a___18','prim_sx_ic_a___19','prim_sx_ic_a___20','prim_sx_other_ic_a',
+    'prim_sx_cd_a___1','prim_sx_cd_a___2','prim_sx_cd_a___30','prim_sx_cd_a___31','prim_sx_cd_a___3','prim_sx_cd_a___4','prim_sx_cd_a___24','prim_sx_cd_a___25','prim_sx_cd_a___5','prim_sx_cd_a___6','prim_sx_cd_a___7','prim_sx_cd_a___8','prim_sx_cd_a___29','prim_sx_cd_a___9','prim_sx_cd_a___10','prim_sx_cd_a___11','prim_sx_cd_a___22','prim_sx_cd_a___23','prim_sx_cd_a___26','prim_sx_cd_a___12','prim_sx_cd_a___13','prim_sx_cd_a___14','prim_sx_cd_a___15','prim_sx_cd_a___16','prim_sx_cd_a___21','prim_sx_cd_a___27','prim_sx_cd_a___28','prim_sx_cd_a___17','prim_sx_cd_a___18','prim_sx_cd_a___19','prim_sx_cd_a___20','prim_sx_other_cd_a',
+    'sx_multivisc_rxn_a','sx_anastomosis_a','sx_anastamosis_ibd_a','sx_temp_diversion_a','secondary_sx_a___17','secondary_sx_a___18','secondary_sx_a___19','secondary_sx_a___20','secondary_sx_a___21','secondary_sx_a___22','secondary_sx_a___23','secondary_sx_a___24','secondary_sx_a___25','secondary_sx_a___26','secondary_sx_a___27','secondary_sx_a___28','secondary_sx_a___29','secondary_sx_a___30','other_secondary_sx_a','sx_comb_service_a___16','sx_comb_service_a___17','sx_comb_service_a___18','sx_comb_service_a___19','sx_comb_service_a___20','sx_comb_service_a___21','sx_ebl_a','sx_length_a']]
+
+    pd.to_pickle(df_surgery_all,'S:\ERAS\cr_sx_all.pickle')
 
 """
 pickle_comp function:
@@ -775,9 +759,11 @@ def organize_demographics():
     """    
 
 def readmit_los():
+    """
+    Reads in cr_df.pickle and df_sx_score.pickle. It will grab los, readmit, ebl,surgery length, diversion status, surgeon list, surgery diagnosis, surgery facility, surgery mode.
 
-    #need to add facility, surgeon, surgery mode, secondary surgery, sx diagnosis, multivisercal resectoin, anasamosis, ibd anastamosis
-
+    :returns: los_readmit.pickle
+    """
     print('readmit_los function is running...')
     df = pd.read_pickle('S:\ERAS\cr_df.pickle')
     df_sx_score = pd.read_pickle('S:\ERAS\df_sx_score.pickle') #reads in sx score df for relevant pts
@@ -791,8 +777,6 @@ def readmit_los():
     df_sx_arm = df_sx_score[df_sx_score.redcap_event_name.isin(redcap_sx_list)]
     df_comp_arm = df_sx_score[df_sx_score.redcap_event_name.isin(redcap_comp_list)]
 
-    # return df_sx_arm
-
     los_list = ['patient_id','sx_po_stay_a']
     readmit_list = ['patient_id','po_sx_readmission_a']
     sx_ebl_list = ['patient_id','sx_ebl_a']
@@ -802,9 +786,6 @@ def readmit_los():
     sx_dx_list = ['patient_id','sx_diagnosis_a']
     sx_fac_list = ['patient_id','sx_facility_a']
     sx_mode_list = ['patient_id','surgery_mode_a']
-
-    # for item in surgeon_list:
-    #     print("'{}':[],".format(item))
 
     surgeon_dict = {'patient_id':[],'surgeon_a___1':[],'surgeon_a___2':[],'surgeon_a___3':[],'surgeon_a___4':[],'surgeon_a___5':[]}
     """
@@ -818,7 +799,6 @@ def readmit_los():
     surgery_mode_a - one_hot
     """
 
-
     df_los = df_sx_arm[los_list]
     df_readmit = df_comp_arm[readmit_list]
     df_sx_ebl = df_sx_arm[sx_ebl_list]
@@ -829,8 +809,6 @@ def readmit_los():
     df_sx_dx = df_sx_arm[sx_dx_list]
     df_sx_fac = df_sx_arm[sx_fac_list]
     df_sx_mode = df_sx_arm[sx_mode_list]
-
-
 
     pt_list = list(df_sx_score.patient_id.unique())
 
@@ -844,15 +822,12 @@ def readmit_los():
     fac_list = []
     mode_list = []
 
-
     num_of_pts = len(pt_list)
-    cnt = 0
 
     percentage=0 #keeps track of runtime
-    #print('{}% complete'.format(percentage)) #keeps track of runtime 
     running_fxn(20,0) #split, percentage
 
-    for patient in pt_list:
+    for cnt, patient in enumerate(pt_list):
         cnt+=1
         df_pt_los = df_los[df_los.patient_id==patient]
         df_pt_los = df_pt_los[['sx_po_stay_a']]
@@ -872,9 +847,6 @@ def readmit_los():
         df_pt_sx_fac = df_pt_sx_fac[sx_fac_list]
         df_pt_sx_mode = df_sx_mode[df_sx_mode.patient_id==patient]
         df_pt_sx_mode = df_pt_sx_mode[sx_mode_list]
-    
-
-
 
         #los
         sx_po_stay_list.append(df_pt_los.max().max())
@@ -892,15 +864,11 @@ def readmit_los():
 
         #surgeron
         for item in df_pt_surgeon:
-            # print(df_pt_surgeon.shape)
-            # print(item)
-            # print(df_pt_surgeon[item].values[0])
             surgeon_dict[item].append(df_pt_surgeon[item].values[0])
 
         #diagnosis, facility, surgery mode
         dx_list.append(df_pt_sx_dx.values[0][1])
         fac_list.append(df_pt_sx_fac.values[0][1])
-        # print(df_pt_sx_fac.values[0][1])
         mode_list.append(df_pt_sx_mode.values[0][1])
 
         
@@ -908,24 +876,21 @@ def readmit_los():
         if round(cnt/num_of_pts*100) != percentage:
             percentage = round(cnt/num_of_pts*100)
             if percentage in range(0,101,5):
-                #print('{}% complete'.format(percentage))
                 running_fxn(20,percentage)
 
-    # print(len(surgeon_dict['surgeon_a___1']))
-    # print(len(pt_list))
     df_output = pd.DataFrame({'patient_id':pt_list,'sx_po_stay':sx_po_stay_list,'po_sx_readmission':po_sx_readmission_list,'sx_ebl':sx_ebl_list,'sx_length':sx_length_list,'sx_diversion':sx_diversion_list,'sx_diagnosis':dx_list,'sx_facility':fac_list,'surgery_mode':mode_list})
 
-    print(df_output.shape)
     df_surgeon = pd.DataFrame(surgeon_dict)
-    print(df_surgeon.shape)
     df_output = pd.merge(df_output,df_surgeon,how='inner',on='patient_id')
-    print(df_output.shape)
-
-    print(df_output.sx_facility.unique())
     pd.to_pickle(df_output,'S:\ERAS\los_readmit.pickle')
     return df_output
 
 def combine_all():
+    """
+    hardcoded to combine all of the dataframes (demographics, surgery score/group, complication, los/readmission)
+
+    :returns: cr_preprocess.pickle
+    """
     df_demo = pd.read_pickle('S:\ERAS\df_demographics_out.pickle')
     df_sx = pd.read_pickle('S:\ERAS\df_sx_score.pickle')
     df_comp = pd.read_pickle('S:\ERAS\cr_df_comp_score.pickle')
@@ -933,25 +898,26 @@ def combine_all():
     df_sx_comp = pd.merge(df_sx,df_comp,how='inner',on='patient_id')
     df_sx_comp_demo = pd.merge(df_sx_comp,df_demo,how='inner',on='patient_id')
     df_output = pd.merge(df_sx_comp_demo,df_los_readmit,how='inner',on='patient_id')
-    df_output = df_output[df_output.sx_score>0]
-    print(df_output.head())
+    
+    #selects only patients who fit into one of the 4 groups
+    df_output = df_output[(df_output.group_1!=0)|(df_output.group_2!=0)|(df_output.group_3!=0)|(df_output.group_4!=0)]
     pd.to_pickle(df_output,'S:\ERAS\cr_preprocess.pickle')
     return df_output
 
 def main():
-    project_modules.load_and_pickle(path_in='S:/ERAS/',file_in='CR_all.xlsx',file_out='cr_df.pickle',sheetname='CR_all')
-    pickle_comp()
-    sx_complications()
-    pickle_comp_dict()
-    max_complication()
-    pickle_surgeries()
-    pickle_sx_dict()
-    create_sx_dict()
-    organize_sx()
-    pickle_demographics()
-    organize_demographics()
+    # project_modules.load_and_pickle(path_in='S:/ERAS/',file_in='CR_all.xlsx',file_out='cr_df.pickle',sheetname='CR_all')
+    # pickle_comp()
+    # sx_complications()
+    # pickle_comp_dict()
+    # max_complication()
+    # pickle_surgeries()
+    # pickle_sx_dict()
+    # create_sx_dict()
+    # organize_sx()
+    # pickle_demographics()
+    # organize_demographics()
     readmit_los()
-    combine_all()
+    # combine_all()
 
 if __name__ == '__main__':
 	main()
