@@ -1,15 +1,3 @@
-"""
-Colorectal Machine Learning Final Pipeline
-
-Instructions:
-  Pipeline:
-    load_and_pickle| uses cr_columns (cuts down columns) & pickles main dataframe
-    pickle_comp| reads in main df from load an pickle &
-    pickle_surgeries| uses main df from load and pickle & pickles surgeries
-
-@author: Robert Handzel
-Last Modified: 4/1/17 
-"""
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,6 +6,14 @@ from matplotlib import style
 style.use('ggplot')
 import re
 
+#used to add parent directory and reload module
+import os
+parent_dir = os.path.join(os.getcwd(),os.pardir)
+import sys
+sys.path.append(parent_dir)
+import project_modules
+import importlib
+importlib.reload(project_modules)
 
 def running_fxn(splits,percent):
     """Prints the percentage complete and takes input splits and precentage"""
@@ -942,40 +938,20 @@ def combine_all():
     pd.to_pickle(df_output,'S:\ERAS\cr_preprocess.pickle')
     return df_output
 
-
-"""
-run_pipeline function
-    run_pipeline()
-    -runs all functions in pipeline
-"""
 def main():
-    # load_and_pickle('S:\ERAS\CR_all.xlsx')
-    # pickle_comp()
-    # sx_complications()
-    # pickle_comp_dict()
-    # max_complication()
-    # pickle_surgeries()
-    # pickle_sx_dict()
+    project_modules.load_and_pickle(path_in='S:/ERAS/',file_in='CR_all.xlsx',file_out='cr_df.pickle',sheetname='CR_all')
+    pickle_comp()
+    sx_complications()
+    pickle_comp_dict()
+    max_complication()
+    pickle_surgeries()
+    pickle_sx_dict()
     create_sx_dict()
-    # organize_sx()
-    # pickle_demographics()
-    # organize_demographics()
-    # readmit_los()
-    # combine_all()
+    organize_sx()
+    pickle_demographics()
+    organize_demographics()
+    readmit_los()
+    combine_all()
 
 if __name__ == '__main__':
 	main()
-
-# load_and_pickle('S:\ERAS\CR_all.xlsx')
-# pickle_comp()
-# pickle_comp_dict()
-#sx_complications()
-# test =max_complication()
-# pickle_surgeries()
-# pickle_sx_dict()
-# create_sx_dict()
-# organize_sx()
-# pickle_demographics()
-# organize_demographics()
-# test = readmit_los()
-# combine_all()
