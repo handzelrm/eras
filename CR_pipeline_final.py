@@ -80,8 +80,6 @@ def pickle_comp():
     pt_list = pt_with_sx_list
     num_of_pts = len(pt_list)
 
-
-
     #loops through each patient
     for cnt, patient in enumerate(pt_list):
 
@@ -103,98 +101,8 @@ def pickle_comp():
 
     df_comp_final = pd.concat(df_comp_final) #don't put in for loop as it will lead to quadratic copying
     print(df_comp_final.shape)
-    #pickles data
-    # pd.to_pickle(df_comp,'S:\ERAS\cr_df_comp.pickle')
-
-    # df = pd.read_pickle('S:\ERAS\cr_df.pickle')
-    # df_comp = pd.read_pickle('S:\ERAS\cr_df_comp_final.pickle')
-    
-    # df_comp_final = df_comp_final[df_comp_final.patient_id.isin(pt_with_sx_list)]
     
     pd.to_pickle(df_comp_final, 'S:\ERAS\cr_comp.pickle')
-
-    # df_comp.to_excel('S:/ERAS/complication_testing.xlsx')
-    # df_comp_final.to_excel('S:/ERAS/complication_final_testing.xlsx')
-
-"""
-sx_complications function:
-  sx_complications()
-  -reads in main, comp, and comp_final dfs
-  -identifeis and removes patients who did not have surgery
-  -returns a df with only pts who had at least 1 surgery
-"""
-def sx_complications():
-    """
-    Takes in cr_df_comp_final pickle adn main cr_df pickle. It
-
-
-
-    """
-    print('sx_complications function is running...')
-    df = pd.read_pickle('S:\ERAS\cr_df.pickle')
-    # df_comp = pd.read_pickle('S:\ERAS\cr_df_comp.pickle')
-    df_comp_final = pd.read_pickle('S:\ERAS\cr_df_comp_final.pickle')
-    surgery_events = ['surgery_dx_1_arm_1'] #defines only relevant arms for complications (rows)
-    # num_of_pts = df_comp.patient_id[-1:].values[0] #number of patients
-    num_surgeries = []
-    pt_id = []
-
-    #this will loop through all of the patients to combine complications to 1 line num_of_pts+1
-    percentage=0
-    pt_list = df_comp_final.patient_id.unique()
-    num_of_pts = len(pt_list)
-
-    for cnt, patient in enumerate(pt_list):
-
-        #prints out progress
-        percentage = project_modules.running_fxn(20,percentage,cnt,num_of_pts)
-
-        #pt dataframe from original database
-        df_pt = df[df.patient_id==patient]
-        num_surgeries.append(df_pt[df_pt.redcap_event_name.isin(surgery_events)].shape[0])
-        if num_surgeries[-1] == 0:
-            #print("Pt: {} #Sx: {}".format(patient,num_surgeries[-1])) #will print all those who did not have any surgeries
-            pass # skip anyone who did not have an operation
-        
-        else:
-            pt_id.append(patient)
-
-    pt_id_df = pd.DataFrame(pt_id,columns=['patient_id']) #returns a df with just the pt ids
-    num_sx_df = pd.DataFrame(num_surgeries,columns=['num_surgeries']) #returns a df with just the number of surgeries
-    df_num_sx_event = pt_id_df.join(num_sx_df) #combines number of surgeries with pt ids
-    df_had_sx = df_num_sx_event[df_num_sx_event.num_surgeries>0] #gives only those who had surgery (down to 1199)
-    df_comp_final.set_index('patient_id',inplace = True) #sets the patient id to index
-    df_had_sx.set_index('patient_id',inplace=True) #sets the patient id to index
-    # print(df_had_sx.head(1))
-    # print(df_comp_final.head(1))
-    df_sx = pd.merge(df_had_sx,df_comp_final, left_index=True, right_index=True, how='left') #adds complications df to the people who had sx (df_had_sx) to create a surgery dataframe
-    df_sx.replace(0,np.NaN,inplace=True) #replaces nan with zeros
-    df_sx_comp = df_sx[df_sx.columns[df_sx.count()>0]] #returns only pts with at least 1 surgery
-    
-
-    ###check logic###
-    df_sx_comp['patient_id'] = df_sx_comp.index 
-
-    # print(df_sx_comp.head())
-    # print(df_sx_comp.index)
-    print(df_sx_comp.shape) #623, 39
-    # print(len(pt_list)) 
-    # print(len(pt_id))
-    
-    pd.to_pickle(df_sx_comp,'S:\ERAS\cr_df_sx_comp.pickle')
-    # df_sx_comp.to_excel('S:/ERAS/complications_testing.xlsx')
-
-
-def testing():
-
-    df = pd.read_pickle('S:\ERAS\cr_df.pickle')
-    df_comp = pd.read_pickle('S:\ERAS\cr_df_comp_final.pickle')
-    redcap_events = ['surgery_dx_1_arm_1'] #redcap events that should be included (rows)
-    # print(df.shape)
-    pt_with_sx_list = df.patient_id[df.redcap_event_name.isin(redcap_events)].tolist()
-    print(df_sx.shape)
-    df_comp = df_comp[df_comp.patient_id.isin(pt_with_sx_list)]
-    print(df_comp.shape)
 
 def max_complication():
     """
@@ -902,17 +810,6 @@ def main():
     readmit_los()
     combine_all()
     # testing()
-
-"""
-pickle_comp_dict:
-  pickle_comp_dict()
-  -reads the complication dictionary to pd df
-  -pickles to 'S:\ERAS\complications_dictionary_table.pickle'
-"""
-# def pickle_comp_dict():    
-#     print('pickle_comp_dict function is running...')
-#     df_comp_dict = pd.read_excel('S:\ERAS\complications_dictionary_table.xlsx')
-#     pd.to_pickle(df_comp_dict,'S:\ERAS\complications_dictionary_table.pickle')
 
 if __name__ == '__main__':
 	main()
