@@ -15,11 +15,6 @@ import project_modules
 import importlib
 importlib.reload(project_modules)
 
-def running_fxn(splits,percent):
-    """Prints the percentage complete and takes input splits and precentage"""
-    print('0%|'+'#'*int(percent/(100/splits))+' '*int((100-percent)/(100/splits))+'|100%')
-
-
 def cr_columns(raw_data):
     """
     Takes in the all data and filters based on columns needed
@@ -80,14 +75,13 @@ def pickle_comp():
     df_comp = df_comp[df_comp.redcap_event_name.isin(redcap_events)] #removes rows that are not needed defined by redcap events list (7777->5372)
     df_comp = df_comp.drop(['redcap_event_name'],axis=1) #drops redcap event name
     df_comp_final = []
-    num_of_pts = df_comp.patient_id[-1:].values[0]
 
-    #this will loop through all of the patients to combine complications to 1 line num_of_pts+1
     percentage=0 #keeps track of runtime
-    print('{}% complete'.format(percentage)) #keeps track of runtime
-    
-    #loops through all patients
-    for patient in range(1,num_of_pts+1):
+    pt_list = df_comp.patient_id.unique()
+    num_of_pts = len(pt_list)
+
+    for cnt, patient in enumerate(pt_list):
+        percentage = project_modules.running_fxn(20,percentage,cnt,num_of_pts)
         df_pt_comp = df_comp[df_comp.patient_id==patient] #pt specific df
         df_pt_cleaned = df_pt_comp.ix[:,df_pt_comp.columns != 'patient_id'].dropna(how='all') #drops rows that have all nan values
 
@@ -100,16 +94,15 @@ def pickle_comp():
             df_comp_final.append(df_pt_cleaned) #appends df_comp_final
         else:
             print('row:{} pt:{}'.format(df_pt_cleaned.shape[0],patient)) #if more than 2 rows for a pt
-        if round(patient/num_of_pts*100) != percentage:
-            percentage = round(patient/num_of_pts*100)
-            if percentage in range(0,101,5):
-                print('{}% complete'.format(percentage))
 
     df_comp_final = pd.concat(df_comp_final) #don't put in for loop as it will lead to quadratic copying
 
     #pickles data
     pd.to_pickle(df_comp,'S:\ERAS\cr_df_comp.pickle')
     pd.to_pickle(df_comp_final, 'S:\ERAS\cr_df_comp_final.pickle')
+
+    df_comp.to_excel('S:/ERAS/complication_testing.xlsx')
+    df_comp_final.to_excel('S:/ERAS/complication_final_testing.xlsx')
 
 """
 sx_complications function:
@@ -561,6 +554,11 @@ def reduce_pt_rows(df):
         print('pt:{} col:{} size:{}'.format(patient,col,df_unique.shape[0]))
 
 def organize_demographics():
+    """
+    Takes in demographics pickle and sx score pickle. It goes through and condenses demographics, medical conditions, medical treatment, asa, smoking, labs, 
+
+
+    """
     print('organize_demographics function is running...')
     df_demo = pd.read_pickle('S:\ERAS\df_demographics.pickle') #reads in demographics df
     df_sx_score = pd.read_pickle('S:\ERAS\df_sx_score.pickle') #reads in sx score df for relevant pts
@@ -641,14 +639,13 @@ def organize_demographics():
 
     pt_list = list(df_sx_score.patient_id)
     num_of_pts = len(pt_list)
-    cnt = 0
 
     percentage=0 #keeps track of runtime
-    print('{}% complete'.format(percentage)) #keeps track of runtime 
 
     #loops through all patients in list
-    for patient in pt_list:
-        cnt+=1
+    for cnt, patient in enumerate(pt_list):
+
+        percentage = project_modules.running_fxn(20,percentage,cnt,num_of_pts)
 
         #dateframes
         df_pt = df_demo[df_demo.patient_id==patient] #pt df
@@ -738,10 +735,10 @@ def organize_demographics():
         prealbumin_value_list.append(median_labs[10])
         crp_value_list.append(median_labs[11])
 
-        if round(cnt/num_of_pts*100) != percentage:
-            percentage = round(cnt/num_of_pts*100)
-            if percentage in range(0,101,5):
-                print('{}% complete'.format(percentage))
+        # if round(cnt/num_of_pts*100) != percentage:
+        #     percentage = round(cnt/num_of_pts*100)
+        #     if percentage in range(0,101,5):
+        #         print('{}% complete'.format(percentage))
 
     df_output = pd.DataFrame({'patient_id':pt_list,'age':age_list,'sex':sex_list,'race':race_list,'ethnicity':ethnicity_list,'bmi':bmi_list,'primary_dx':primary_dx_list,'second_dx':second_dx_list,'no_total_attacks':no_total_attacks_list,'no_ab_sx':no_ab_sx_list,'med_condition___9': med_condition___9_list, 'med_condition___1': med_condition___1_list, 'med_condition___10': med_condition___10_list, 'med_condition___4': med_condition___4_list, 'med_condition___8': med_condition___8_list, 'med_condition___6': med_condition___6_list, 'med_condition___2': med_condition___2_list, 'med_condition___12': med_condition___12_list, 'med_condition___13': med_condition___13_list, 'med_condition___11': med_condition___11_list, 'med_condition___7': med_condition___7_list, 'med_condition___5': med_condition___5_list, 'med_condition___3': med_condition___3_list,'currenct_medtreatment___14':current_medtreatment___14_list,'currenct_medtreatment___15':current_medtreatment___15_list,'currenct_medtreatment___16':current_medtreatment___16_list,'currenct_medtreatment___17':current_medtreatment___17_list,'currenct_medtreatment___18':current_medtreatment___18_list,'currenct_medtreatment___19':current_medtreatment___19_list,'currenct_medtreatment___20':current_medtreatment___20_list,'currenct_medtreatment___21':current_medtreatment___21_list,'currenct_medtreatment___22':current_medtreatment___22_list,'currenct_medtreatment___23':current_medtreatment___23_list,'asa_class':asa_class_list,'ho_smoking':ho_smoking_list,'cea_value':cea_value_list,'wbc_value':wbc_value_list,'hgb_value':hgb_value_list,'plt_value':plt_value_list,'bun_value':bun_value_list,'creatinine_value':creatinine_value_list,'albumin_value':albumin_value_list,'alp_value':alp_value_list,'glucose_value':glucose_value_list,'hba1c_value':hba1c_value_list,'prealbumin_value':prealbumin_value_list,'crp_value':crp_value_list})
 
@@ -824,11 +821,12 @@ def readmit_los():
 
     num_of_pts = len(pt_list)
 
-    percentage=0 #keeps track of runtime
-    running_fxn(20,0) #split, percentage
-
+    percentage = 0
     for cnt, patient in enumerate(pt_list):
-        cnt+=1
+
+        #prints out progress
+        percentage = project_modules.running_fxn(20,percentage,cnt,num_of_pts)
+
         df_pt_los = df_los[df_los.patient_id==patient]
         df_pt_los = df_pt_los[['sx_po_stay_a']]
         df_pt_readmit = df_readmit[df_readmit.patient_id==patient]
@@ -871,13 +869,6 @@ def readmit_los():
         fac_list.append(df_pt_sx_fac.values[0][1])
         mode_list.append(df_pt_sx_mode.values[0][1])
 
-        
-        #track progress
-        if round(cnt/num_of_pts*100) != percentage:
-            percentage = round(cnt/num_of_pts*100)
-            if percentage in range(0,101,5):
-                running_fxn(20,percentage)
-
     df_output = pd.DataFrame({'patient_id':pt_list,'sx_po_stay':sx_po_stay_list,'po_sx_readmission':po_sx_readmission_list,'sx_ebl':sx_ebl_list,'sx_length':sx_length_list,'sx_diversion':sx_diversion_list,'sx_diagnosis':dx_list,'sx_facility':fac_list,'surgery_mode':mode_list})
 
     df_surgeon = pd.DataFrame(surgeon_dict)
@@ -906,7 +897,7 @@ def combine_all():
 
 def main():
     # project_modules.load_and_pickle(path_in='S:/ERAS/',file_in='CR_all.xlsx',file_out='cr_df.pickle',sheetname='CR_all')
-    # pickle_comp()
+    pickle_comp()
     # sx_complications()
     # pickle_comp_dict()
     # max_complication()
@@ -916,7 +907,7 @@ def main():
     # organize_sx()
     # pickle_demographics()
     # organize_demographics()
-    readmit_los()
+    # readmit_los()
     # combine_all()
 
 if __name__ == '__main__':
