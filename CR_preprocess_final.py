@@ -3,7 +3,7 @@ import numpy as np
 import datetime
 from sklearn import preprocessing, tree, datasets, metrics, svm
 from sklearn.metrics import roc_curve, auc
-from sklearn.model_selection import cross_val_predict, StratifiedKFold
+from sklearn.model_selection import cross_val_predict, StratifiedKFold, LeaveOneOut, train_test_split
 import os
 import pydotplus
 from IPython.display import Image
@@ -28,28 +28,29 @@ def split_eras():
     eras_dt = datetime.datetime(2014,7,1,0,0) #date at which ERAS began
 
 
-    # # plotting out data distributions
-    # # reruns is error and stores columns with error in pickle file
-    ignore = []
-    error = False
-    for i in df_all.columns:        
-        try:
-            ignore = list(pd.read_pickle('S:\ERAS\ignore_plt.pickle'))
-        except:
-            error = True
-        if i not in ignore:
-            try:
-                n, bins, patches = plt.hist(df_all[i].dropna())
-                plt.axvline(df_all[i].dropna().mean(),color='b',linestyle='dashed',linewidth=2)
-                plt.axvline(df_all[i].dropna().median(),color='g',linestyle='dashed',linewidth=2)
-                plt.title(i)
-                plt.show()
-            except:
-                error = True
-                ignore.append(i)
-    if error == True:
-        pd.to_pickle(ignore,'S:\ERAS\ignore_plt.pickle')
-        split_eras()
+    # # # plotting out data distributions
+    # # # reruns is error and stores columns with error in pickle file
+    # ignore = []
+    # error = False
+    # for i in df_all.columns:        
+    #     try:
+    #         ignore = list(pd.read_pickle('S:\ERAS\ignore_plt.pickle'))
+    #     except:
+    #         error = True
+    #     if i not in ignore:
+    #         try:
+    #             n, bins, patches = plt.hist(df_all[i].dropna())
+    #             plt.axvline(df_all[i].dropna().mean(),color='b',linestyle='dashed',linewidth=2)
+    #             plt.axvline(df_all[i].dropna().median(),color='g',linestyle='dashed',linewidth=2)
+    #             plt.title(i)
+    #             plt.show()
+    #         except:
+    #             error = True
+    #             ignore.append(i)
+
+    # if error == True:
+    #     pd.to_pickle(ignore,'S:\ERAS\ignore_plt.pickle')
+    #     split_eras()
     
 
     eras = df_all[df_all.sx_admission_date_a>=eras_dt]
@@ -60,13 +61,13 @@ def split_eras():
     pd.to_pickle(eras,'S:\ERAS\cr_eras.pickle')
     pd.to_pickle(non_eras,'S:\ERAS\cr_non_eras.pickle')
 
+    eras.to_excel('S:/ERAS/eras_pts.xlsx')
+    non_eras.to_excel('S:/ERAS/non_eras_pts.xlsx')
+
     eras_pts = list(eras.patient_id)
     non_eras_pts = list(non_eras.patient_id)
 
     return eras_pts, non_eras_pts
-
-eras_pts, non_eras_pts = split_eras()
-
 
 def impute_df(strat,df):
     fill_NaN = preprocessing.Imputer(missing_values=np.nan, strategy=strat, axis=0)
@@ -125,7 +126,7 @@ def impute_data(df):
     missing_as_value = ['primary_dx','race','second_dx','sex','ethnicity','ho_smoking','sx_diagnosis','sx_facility','surgery_mode'] #set max+1
     not_missing_at_random = ['currenct_medtreatment___14','currenct_medtreatment___15','currenct_medtreatment___16','currenct_medtreatment___17','currenct_medtreatment___18','currenct_medtreatment___19','currenct_medtreatment___20','currenct_medtreatment___21','currenct_medtreatment___22','currenct_medtreatment___23','med_condition___1','med_condition___10','med_condition___11','med_condition___12','med_condition___13','med_condition___2','med_condition___3','med_condition___4','med_condition___5','med_condition___6','med_condition___7','med_condition___8','med_condition___9','cea_value','crp_value','no_ab_sx','no_total_attacks','sx_diversion','surgeon_a___1','surgeon_a___2','surgeon_a___3','surgeon_a___4','surgeon_a___5',] #set to default 0
     impute_mean = ['age','albumin_value','alp_value','bmi','bun_value','creatinine_value','glucose_value','hgb_value','plt_value','prealbumin_value','wbc_value','sx_ebl','sx_length'] #imput mean
-    impute_mode = ['sx_score','asa_class'] #imput mode
+    impute_mode = ['asa_class'] #imput mode
     #impute zero: cea_value, crp_value
 
     output = ['po_sx_readmission','sx_po_stay','comp_score']   
@@ -189,6 +190,10 @@ def impute_data(df):
     df_comp = df[df.comp_score>0]
     df_readmit = df[df.po_sx_readmission>0]
 
+    print(df_input.head())
+    print(df_input.columns[df_input.isnull().any()].tolist())
+    print(df_output.columns[df_output.isnull().any()].tolist())
+
     X_comp = df_comp[not_missing_at_random+missing_as_value+impute_mean+impute_mode].as_matrix()
     y_only_comp = df_comp.comp_score.as_matrix()
 
@@ -196,10 +201,16 @@ def impute_data(df):
     y_only_readmit = df_readmit.po_sx_readmission.as_matrix()
 
     X = df_input.as_matrix()
+
+    print(X_comp.shape,X_readmit.shape,X.shape)
+    print(y_only_comp.shape,y_only_readmit.shape)
+
     y_readmit = df_output.po_sx_readmission.as_matrix()
     y_los = df_output.sx_po_stay.as_matrix()
     y_comp = df_output.comp_score.as_matrix()
     y_cols = list(df_input.columns)
+
+    print(y_readmit.shape,y_los.shape,y_comp.shape)
 
     return X, y_readmit, y_los, y_comp, y_cols, X_comp, y_only_comp, X_readmit, y_only_readmit
 
@@ -296,6 +307,18 @@ def cross_validate(max_depth,min_samples_leaf,X,y,multiclass,group_name):
 
     return accuracy
 
+def loocv(X,y,clf):
+    loo = LeaveOneOut()
+    loo.get_n_splits(X)
+    for train_index,test_index in loo.split(X):
+
+        # print("TRAIN:", train_index, "TEST:", test_index)
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        clf = clf.fit(X_train,y_train)
+        clf.score(X_test,y_test)
+        # print(X_train, X_test, y_train, y_test)
+
 def build_a_tree(max_depth,min_samples_leaf,X,y,features,path,file):
     clf = tree.DecisionTreeClassifier(max_depth=max_depth,min_samples_leaf=min_samples_leaf)
     clf = clf.fit(X,y)
@@ -322,38 +345,67 @@ def compare_groups(max_depth, min_sample_leaf, X_eras, y_eras, X_non, y_non, era
     num_of_non_eras_predicted_zeros = df_eras_y.non_eras_predicted_y[df_eras_y.non_eras_predicted_y==0].count()
     print('\tnon eras prediction: \t{}/{}\t\t{}%'.format(num_of_non_eras_predicted_zeros,eras_y_data.shape[0],round(100*num_of_non_eras_predicted_zeros/eras_y_data.shape[0],2)))
 
-df_eras = pd.read_pickle('S:\ERAS\cr_eras.pickle')
-df_non_eras = pd.read_pickle('S:\ERAS\cr_non_eras.pickle')
 
 
-#runs imputation for eras and non-eras
-print(df_eras.shape)
-eras_X, eras_y_readmit, eras_y_los, eras_y_comp, eras_cols, eras_X_comp, eras_y_only_comp, eras_X_readmit, eras_y_only_readmit = impute_data(df_eras)
-non_eras_X, non_eras_y_readmit, non_eras_y_los, non_eras_y_comp, non_eras_cols, non_eras_X_comp, non_eras_y_only_comp, non_eras_X_readmit, non_eras_y_only_readmit = impute_data(df_non_eras)
+def main():
 
-#sets the max_depth and min sample leaves for all functions
-max_depth = 5
+    eras_pts, non_eras_pts = split_eras()
 
-min_samples_leaf = 20
+    df_eras = pd.read_pickle('S:\ERAS\cr_eras.pickle')
+    df_non_eras = pd.read_pickle('S:\ERAS\cr_non_eras.pickle')
 
-#runs cross model comparison and prints out results
-print('complications')
-# compare_groups(max_depth, min_samples_leaf, eras_X, eras_y_comp, non_eras_X, non_eras_y_comp, eras_X_comp, eras_y_only_comp, non_eras_X_comp, non_eras_y_only_comp)
-print('readmissions')
-# compare_groups(max_depth, min_samples_leaf, eras_X, eras_y_readmit, non_eras_X, non_eras_y_readmit, eras_X_readmit, eras_y_only_readmit, non_eras_X_readmit, non_eras_y_only_readmit)
 
-#runs cross validaotin function and creates ROC curves with AUC
-print('ERAS Readmissions')
-cv_eras_readmit = cross_validate(max_depth,min_samples_leaf,eras_X,eras_y_readmit,multiclass=False,group_name='ERAS')
-print('ERAS Complications')
-cv_eras_comp = cross_validate(max_depth,min_samples_leaf,eras_X,eras_y_comp,multiclass=True,group_name='ERAS')
-print('Non-ERAS Readmissions')
-cv_non_eras_readmit = cross_validate(max_depth,min_samples_leaf,non_eras_X,non_eras_y_readmit,multiclass=False,group_name='Non-ERAS')
-print('Non-ERAS Complications')
-cv_non_eras_comp = cross_validate(max_depth,min_samples_leaf,non_eras_X,non_eras_y_comp,multiclass=True,group_name='Non-ERAS')
+    #runs imputation for eras and non-eras
+    # print(df_eras.shape)
+    eras_X, eras_y_readmit, eras_y_los, eras_y_comp, eras_cols, eras_X_comp, eras_y_only_comp, eras_X_readmit, eras_y_only_readmit = impute_data(df_eras)
+    non_eras_X, non_eras_y_readmit, non_eras_y_los, non_eras_y_comp, non_eras_cols, non_eras_X_comp, non_eras_y_only_comp, non_eras_X_readmit, non_eras_y_only_readmit = impute_data(df_non_eras)
 
-#runs build a tree function, which uses the decision tree classifer to build trees for each of the models
-build_a_tree(max_depth,min_samples_leaf,eras_X,eras_y_readmit,eras_cols,path='S:\\ERAS\\DTs\\',file='DT_ERAS_readmit.pdf')
-build_a_tree(max_depth,min_samples_leaf,eras_X,eras_y_comp,eras_cols,path='S:\\ERAS\\DTs\\',file='DT_ERAS_comp.pdf')
-build_a_tree(max_depth,min_samples_leaf,non_eras_X,non_eras_y_readmit,non_eras_cols,path='S:\\ERAS\\DTs\\',file='DT_non_eras_readmit.pdf')
-build_a_tree(max_depth,min_samples_leaf,non_eras_X,non_eras_y_comp,non_eras_cols,path='S:\\ERAS\\DTs\\',file='DT_non_eras_comp.pdf')
+    print(df_eras.columns[df_eras.isnull().any()].tolist())
+    return
+
+    print('ERAS')
+    clf = tree.DecisionTreeClassifier(max_depth=3,min_samples_leaf=5)
+    outputs = [eras_y_readmit,eras_y_comp,eras_y_los]
+    for output in outputs:
+        X_train, X_test, y_train, y_test = train_test_split(eras_X,output,test_size=0.2,random_state=42)
+        try:
+            loocv(X_train,y_train,clf)
+        except:
+            print(X_train,y_train)
+
+    # print('Non-ERAS')
+    # outputs = [non_eras_y_readmit,non_eras_y_comp,non_eras_y_los]
+    # for output in outputs:
+    #     X_train, X_test, y_train, y_test = train_test_split(eras_X,output,test_size=0.2,random_state=42)
+
+    # X_train, X_test, y_train, y_test = train_test_split(eras_X,eras_y_los,test_size=0.2,random_state=42)
+
+    #sets the max_depth and min sample leaves for all functions
+    # max_depth = 5
+
+    # min_samples_leaf = 20
+
+    #runs cross model comparison and prints out results
+    # print('complications')
+    # # compare_groups(max_depth, min_samples_leaf, eras_X, eras_y_comp, non_eras_X, non_eras_y_comp, eras_X_comp, eras_y_only_comp, non_eras_X_comp, non_eras_y_only_comp)
+    # print('readmissions')
+    # # compare_groups(max_depth, min_samples_leaf, eras_X, eras_y_readmit, non_eras_X, non_eras_y_readmit, eras_X_readmit, eras_y_only_readmit, non_eras_X_readmit, non_eras_y_only_readmit)
+
+    # #runs cross validaotin function and creates ROC curves with AUC
+    # print('ERAS Readmissions')
+    # cv_eras_readmit = cross_validate(max_depth,min_samples_leaf,eras_X,eras_y_readmit,multiclass=False,group_name='ERAS')
+    # print('ERAS Complications')
+    # cv_eras_comp = cross_validate(max_depth,min_samples_leaf,eras_X,eras_y_comp,multiclass=True,group_name='ERAS')
+    # print('Non-ERAS Readmissions')
+    # cv_non_eras_readmit = cross_validate(max_depth,min_samples_leaf,non_eras_X,non_eras_y_readmit,multiclass=False,group_name='Non-ERAS')
+    # print('Non-ERAS Complications')
+    # cv_non_eras_comp = cross_validate(max_depth,min_samples_leaf,non_eras_X,non_eras_y_comp,multiclass=True,group_name='Non-ERAS')
+
+    # #runs build a tree function, which uses the decision tree classifer to build trees for each of the models
+    # build_a_tree(max_depth,min_samples_leaf,eras_X,eras_y_readmit,eras_cols,path='S:\\ERAS\\DTs\\',file='DT_ERAS_readmit.pdf')
+    # build_a_tree(max_depth,min_samples_leaf,eras_X,eras_y_comp,eras_cols,path='S:\\ERAS\\DTs\\',file='DT_ERAS_comp.pdf')
+    # build_a_tree(max_depth,min_samples_leaf,non_eras_X,non_eras_y_readmit,non_eras_cols,path='S:\\ERAS\\DTs\\',file='DT_non_eras_readmit.pdf')
+    # build_a_tree(max_depth,min_samples_leaf,non_eras_X,non_eras_y_comp,non_eras_cols,path='S:\\ERAS\\DTs\\',file='DT_non_eras_comp.pdf')
+
+if __name__ == '__main__':
+    main()
