@@ -150,173 +150,13 @@ def max_complication():
     df_comp_score = pd.DataFrame({'patient_id':df_sx_comp.patient_id,'comp_score':df_sx_comp.comp_score})
     pd.to_pickle(df_comp_score,'S:\ERAS\cr_comp_score.pickle')
 
-def organize_sx():
-    """
-    Looks at cr_sx_all and sx_list_dict_comp pickles to determine surgical score.
-
-    :returns: surgical score file
-    """
-    print('organize_sx function is running...')
-    df = pd.read_pickle('S:\ERAS\cr_sx_all.pickle')
-    df_sx_dict_comp = pd.read_pickle('S:\\ERAS\sx_list_dict_comp.pickle')
-
-    # redcap_events = ['surgery_dx_1_arm_1']
-
-    # df = df[df.redcap_event_name.isin(redcap_events)] #removes rows that are not needed defined by redcap events list (7777->5372)
-    urg_a = df[df.sx_urgency_a==2].shape[0]
-
-    #removes emergent cases (2), elective are (1). needed to fix as 31 are nan
-    # df = df[df.sx_urgency_a!=2]
-    df = df[df.sx_urgency_a==1]
-    # df = df[pd.isnull(df.sx_urgency_a)]
-
-    pt_list = list(df.patient_id.unique()) #creates list of patients for more effecient looping
-    num_of_pts = len(pt_list)
-   
-    df.drop(['sx_urgency_a'],axis=1,inplace=True) #removes non surgical columns
-    
-    percentage=0 #keeps track of runtime
-          
-    sx_cnt_list = []
-    sx_score_list = []
-
-    group_dict = {1:[],2:[],3:[],4:[]}
-
-    for cnt,patient in enumerate(pt_list):
-        percentage = project_modules.running_fxn(20,percentage,cnt,num_of_pts)
-        df_pt = df[df.patient_id==patient] #pt specific df
-        df_pt = df_pt.ix[:,df_pt.columns!='patient_id'].dropna(how='all') #drops rows that have all nan values
-        df_pt = df_pt.replace(0,np.NaN)
-        sx_list = df_pt.columns[pd.notnull(df_pt).sum()>0].tolist()
-
-        # cnt += 1
-        # score = [-1]
-
-        # if the patient did not have any surgeries skip
-        if df_pt.shape[0]==0:
-            pass
-
-        # if only one surgery row
-        elif df_pt.shape[0]==1:
-
-            #loops through each surgery
-            group_cnt= {1:0,2:0,3:0,4:0}
-            for cnt, sx in enumerate(df_pt.items()):
-                # print(cnt)
-                
-                
-                
-
-                if sx[1].values[0]==1: #if the sx column has a value of 1 meaning it happened
-                    try:
-                        score = df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0] #surgical score which will correlate to groupby
-                    except:
-                        score = -1
-
-                    if score == 1 and group_cnt[1] != 1:
-                        group_dict[1].append(1)
-                        group_cnt[1] = 1
-                    elif score == 2 and group_cnt[2] != 1:
-                        group_dict[2].append(1)
-                        group_cnt[2] = 1
-                    elif score == 3 and group_cnt[3] != 1:
-                        group_dict[3].append(1)
-                        group_cnt[3] = 1
-                    elif score == 4 and group_cnt[4] != 1:
-                        group_dict[4].append(1)
-                        group_cnt[4] = 1
-                    elif score == -1:
-                        pass
-
-            for i in group_cnt:
-            	if group_cnt[i] == 0:
-            		group_dict[i].append(0)
-
-
-
-                    #comb_service are not in dictionary and will throw an error
-                    # try: 
-                    #     score.append(df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0]) #finds match in name column of df and returns the score value (an array) and takes the 1st value (only one)
-                    # except:
-                    #     #print('sx_col{}'.format(sx[0]))  
-                    #     #non_listed_sx.append(sx[0]) #will give a list of non_listed_sx from dict
-                    #     pass        
-        #will just take the first operation for now
-        elif df_pt.shape[0]==2:
-            group_cnt= {1:0,2:0,3:0,4:0}
-
-            df_pt = df_pt.iloc[[0]]
-            for cnt, sx in enumerate(df_pt.items()):
-                if sx[1].values[0]==1: #if the sx column has a value of 1 meaning it happened
-                    #comb_service are not in dictionary and will throw an error
-                   
-
-                    score = df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0] #surgical score which will correlate to groupby
-
-
-                    if score == 1 and group_cnt[1] != 1:
-                        group_dict[1].append(1)
-                        group_cnt[1] = 1
-                    elif score == 2 and group_cnt[2] != 1:
-                        group_dict[2].append(1)
-                        group_cnt[2] = 1
-                    elif score == 3 and group_cnt[3] != 1:
-                        group_dict[3].append(1)
-                        group_cnt[3] = 1
-                    elif score == 4 and group_cnt[4] != 1:
-                        group_dict[4].append(1)
-                        group_cnt[4] = 1
-                    elif score == -1:
-                    	pass
-
-            for i in group_cnt:
-                if group_cnt[i] == 0:
-                    group_dict[i].append(0)
-                    
-                    # try: 
-                    #     score.append(df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0]) #finds match in name column of df and returns the score value (an array) and takes the 1st value (only one)
-                    # except:
-                    #     #print('sx_col{}'.format(sx[0]))  
-                    #     #non_listed_sx.append(sx[0]) #will give a list of non_listed_sx from dict
-                    #     pass
-            #print('rows:{} pt:{}'.format(df_pt.shape[0],patient)) #if more than 2 rows for a pt
-
-        else:
-            print('More than 2 rows')
-                  
- 
-        
-        # sx_score = np.max(score)
-        # sx_score_list.append(sx_score)
-    
-    # df_sx_score = pd.DataFrame({'patient_id':pt_list,'sx_score':sx_score_list})
-
-    print(len(pt_list), end=' ')
-    for i in group_dict:
-    	print(len(group_dict[i]),end=' ')
-
-    df_sx_score = pd.DataFrame({'patient_id':pt_list,'group_1':group_dict[1],'group_2':group_dict[2],'group_3':group_dict[3],'group_4':group_dict[4]})
-    pd.to_pickle(df_sx_score,'S:\ERAS\df_sx_score.pickle')
-
-def pickle_sx_dict():
-    df = pd.read_excel('S:\ERAS\\test_sx_list.xlsx')
-    pd.to_pickle(df,'S:\ERAS\\test_sx_list.pickle')
-
-
-"""
-create_sx_dict function:
-  create_sx_dict()
-  -reads in sx list input file
-  -reads in a unique surgery dictionary which has mappings and values
-    -This is a transposed excel file
-  -iterates over the input file to create all unique column names
-  -then iterates over all procedures in dictionary to find a match
-  -values in this are set up in specific order to make sure incorrect matches do not occur
-  -outputs a file with column name, surgical score, description, unique name, unique code/number    
-"""
 def create_sx_dict():
     """
-    Takes data from a list of surgery names and addes the appropriate numbers to form all unique headers
+    Takes data from a list of surgery names (sx_list_input.xlsx) and addes the appropriate numbers to form all unique headers.   
+        -iterates over the input file to create all unique column names
+        -then iterates over all procedures in dictionary to find a match
+        -values in this are set up in specific order to make sure incorrect matches do not occur
+        -outputs a file with column name, surgical score, description, unique name, unique code/number    
 
     :returns: sx_list_dict_comp xlsx and pickle file. These files will act as a mapping dictionary with header names, surgery group (score), description and associated code to unify list.
     """
@@ -351,12 +191,14 @@ def create_sx_dict():
                         unique_list.append(procedure_dict[procedure][0])
                         unique_code.append(procedure_dict[procedure][1])
                         score.append(procedure_dict[procedure][2])
+                        # print(procedure_dict[procedure][2])
                         match = True
                         break #if match no need to look further
                 #checks to make sure there was a match
                 if not match:
                     unique_list.append('None')
                     unique_code.append(-1)
+                    score.append(-1)
                 regex = re.search(r'(\w+).*',item)
                 number = regex.group(1) #number value from string
                 procedure = regex.group(0) #whole string
@@ -375,64 +217,150 @@ def create_sx_dict():
                     score.append(procedure_dict[procedure][2])
                     match = True
                     break #if match no neeed to look further
+
             #checks to make sure there was a match
             if not match:
                 unique_list.append('None')
                 unique_code.append(-1)
+                score.append(-1)
             regex = re.search(r'(\w+).*',item)
             number = regex.group(1)
             procedure = regex.group(0)
             main_output.append(input_name)
             description_output.append(procedure)
-            
-        
-                    # unique_list.append('None')
-                # print(procedure)
+                    
 
-        
-        """
-        except:
-            if ~np.isnan(text_names):
-                print(text_names)
-            # elif re.search(r'sx_rectopexy',input_name) is not None:
-            #     main_output.append(input_name)
-            #     description_output.append(input_name)
-            #     unique_list.append('Rectopexy')
-            #     unique_code.append(53)
-            # elif re.search(r'other',input_name) is not None:
-            #     main_output.append(input_name)
-            #     description_output.append(input_name)
-            #     unique_list.append('other')
-            #     unique_code.append(54)
-            else:
-                main_output.append(input_name)
-                description_output.append(input_name)
-                unique_list.append('None')
-                unique_code.append(-1)
-        """
-        
     df_out = pd.DataFrame(main_output,columns=['name'])
-    # df_out['score'] = np.ones(df_out.shape[0])
     df_out['score'] = score
     df_out['description'] = description_output
     df_out['unique'] = unique_list
     df_out['code'] = unique_code
-    writer = pd.ExcelWriter('S:\ERAS\sx_list_dict_comp.xlsx')
-    df_out.to_excel(writer,'Sheet1')
-    writer.close()
+    df_out.to_excel('S:\ERAS\sx_list_dict_comp.xlsx',sheet_name='Sheet1')
 
     pd.to_pickle(df_out,'S:\ERAS\sx_list_dict_comp.pickle')
 
-def pickle_demographics():
-  df = pd.read_pickle('S:\ERAS\cr_df.pickle')
-  df_demo = df[['patient_id','redcap_event_name','age','sex','race','ethnicity','bmi','primary_dx','other_dx_','second_dx','other_second_dx','pt_hx_statusdiv___1','pt_hx_statusdiv___2','pt_hx_statusdiv___3','no_compl_attacks','no_divattacks_hospital','no_total_attacks','no_ab_sx','prior_ab_sx___0','prior_ab_sx___1','prior_ab_sx___2','prior_ab_sx___3','prior_ab_sx___4','prior_ab_sx___5','prior_ab_sx___6','prior_ab_sx___7','prior_ab_sx___8','prior_ab_sx___9','prior_ab_sx___10','prior_ab_sx___11','prior_ab_sx___12','prior_ab_sx___13','prior_ab_sx___14','prior_ab_sx___15','prior_ab_sx___16','prior_ab_sx___17','prior_ab_sx___18','prior_ab_sx___19','prior_ab_sx_other','med_condition___1','med_condition___2','med_condition___3','med_condition___4','med_condition___5','med_condition___6','med_condition___7','med_condition___8','med_condition___9','med_condition___10','med_condition___11','med_condition___12','med_condition___13','current_medtreatment___14','current_medtreatment___15','current_medtreatment___16','current_medtreatment___17','current_medtreatment___18','current_medtreatment___19','current_medtreatment___20','current_medtreatment___21','current_medtreatment___22','current_medtreatment___23','asa_class','ho_smoking','cea_value','wbc_value','hgb_value','plt_value','bun_value','creatinine_value','albumin_value','alp_value','glucose_value','hba1c_value','prealbumin_value','crp_value']]
-  
-  pd.to_pickle(df_demo,'S:\ERAS\df_demographics.pickle')
+def organize_sx():
+    """
+    Looks at cr_sx_all and sx_list_dict_comp pickles to determine surgical score. It will onehotencode by group (4 groups)
 
-#made because had to do so many tries for each of the characteristics
+    :returns: df_sx_score.pickle
+    """
+    print('organize_sx function is running...')
+    df = pd.read_pickle('S:\ERAS\cr_sx_all.pickle')
+    df_sx_dict_comp = pd.read_pickle('S:\\ERAS\sx_list_dict_comp.pickle')
+
+    #removes emergent cases (2), elective are (1).
+    df = df[df.sx_urgency_a==1]
+
+    pt_list = list(df.patient_id.unique()) #creates list of patients for more effecient looping
+    num_of_pts = len(pt_list)
+   
+    df.drop(['sx_urgency_a'],axis=1,inplace=True) #removes non surgical columns
+    
+    percentage=0 #keeps track of runtime
+    group_dict = {1:[],2:[],3:[],4:[]}
+
+    for cnt,patient in enumerate(pt_list):
+        percentage = project_modules.running_fxn(20,percentage,cnt,num_of_pts)
+        df_pt = df[df.patient_id==patient] #pt specific df
+        df_pt = df_pt.ix[:,df_pt.columns!='patient_id'].dropna(how='all') #drops rows that have all nan values
+        df_pt = df_pt.replace(0,np.NaN)
+        sx_list = df_pt.columns[pd.notnull(df_pt).sum()>0].tolist()
+
+        # if the patient did not have any surgeries skip
+        if df_pt.shape[0]==0:
+            pass
+
+        # if only one surgery row
+        elif df_pt.shape[0]==1:
+
+            #loops through each surgery
+            group_cnt= {1:0,2:0,3:0,4:0}
+            for cnt, sx in enumerate(df_pt.items()):
+                # print(cnt)
+                
+                if sx[1].values[0]==1: #if the sx column has a value of 1 meaning it happened
+                    try:
+                        score = df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0] #surgical score which will correlate to groupby
+                    except:
+                        score = -1
+
+                    if score == 1 and group_cnt[1] != 1:
+                        group_dict[1].append(1)
+                        group_cnt[1] = 1
+                    elif score == 2 and group_cnt[2] != 1:
+                        group_dict[2].append(1)
+                        group_cnt[2] = 1
+                    elif score == 3 and group_cnt[3] != 1:
+                        group_dict[3].append(1)
+                        group_cnt[3] = 1
+                    elif score == 4 and group_cnt[4] != 1:
+                        group_dict[4].append(1)
+                        group_cnt[4] = 1
+                    elif score == -1:
+                        pass
+
+            for i in group_cnt:
+            	if group_cnt[i] == 0:
+            		group_dict[i].append(0)
+
+        #will just take the first operation for now
+        elif df_pt.shape[0]==2:
+            group_cnt= {1:0,2:0,3:0,4:0}
+
+            df_pt = df_pt.iloc[[0]]
+            for cnt, sx in enumerate(df_pt.items()):
+                if sx[1].values[0]==1: #if the sx column has a value of 1 meaning it happened
+                    #comb_service are not in dictionary and will throw an error
+                   
+                    if sx[0] in df_sx_dict_comp.name:
+                        score = df_sx_dict_comp.score[df_sx_dict_comp.name==sx[0]].values[0] #surgical score which will correlate to groupby
+
+                    if score == 1 and group_cnt[1] != 1:
+                        group_dict[1].append(1)
+                        group_cnt[1] = 1
+                    elif score == 2 and group_cnt[2] != 1:
+                        group_dict[2].append(1)
+                        group_cnt[2] = 1
+                    elif score == 3 and group_cnt[3] != 1:
+                        group_dict[3].append(1)
+                        group_cnt[3] = 1
+                    elif score == 4 and group_cnt[4] != 1:
+                        group_dict[4].append(1)
+                        group_cnt[4] = 1
+                    elif score == -1:
+                    	pass
+
+            for i in group_cnt:
+                if group_cnt[i] == 0:
+                    group_dict[i].append(0)
+
+        else:
+            print('More than 2 rows')
+
+    df_sx_score = pd.DataFrame({'patient_id':pt_list,'group_1':group_dict[1],'group_2':group_dict[2],'group_3':group_dict[3],'group_4':group_dict[4]})
+    pd.to_pickle(df_sx_score,'S:\ERAS\df_sx_score.pickle')
+    df_sx_score.to_excel('S:/ERAS/df_sx_score.xlsx')
+
+def pickle_demographics():
+    """
+    Reads cr_df pickle and selects the demographics columns.
+
+    :returns: df_demogrpahics.pickle
+    """
+    df = pd.read_pickle('S:\ERAS\cr_df.pickle')
+    df_demo = df[['patient_id','redcap_event_name','age','sex','race','ethnicity','bmi','primary_dx','other_dx_','second_dx','other_second_dx','pt_hx_statusdiv___1','pt_hx_statusdiv___2','pt_hx_statusdiv___3','no_compl_attacks','no_divattacks_hospital','no_total_attacks','no_ab_sx','prior_ab_sx___0','prior_ab_sx___1','prior_ab_sx___2','prior_ab_sx___3','prior_ab_sx___4','prior_ab_sx___5','prior_ab_sx___6','prior_ab_sx___7','prior_ab_sx___8','prior_ab_sx___9','prior_ab_sx___10','prior_ab_sx___11','prior_ab_sx___12','prior_ab_sx___13','prior_ab_sx___14','prior_ab_sx___15','prior_ab_sx___16','prior_ab_sx___17','prior_ab_sx___18','prior_ab_sx___19','prior_ab_sx_other','med_condition___1','med_condition___2','med_condition___3','med_condition___4','med_condition___5','med_condition___6','med_condition___7','med_condition___8','med_condition___9','med_condition___10','med_condition___11','med_condition___12','med_condition___13','current_medtreatment___14','current_medtreatment___15','current_medtreatment___16','current_medtreatment___17','current_medtreatment___18','current_medtreatment___19','current_medtreatment___20','current_medtreatment___21','current_medtreatment___22','current_medtreatment___23','asa_class','ho_smoking','cea_value','wbc_value','hgb_value','plt_value','bun_value','creatinine_value','albumin_value','alp_value','glucose_value','hba1c_value','prealbumin_value','crp_value']]
+
+    pd.to_pickle(df_demo,'S:\ERAS\df_demographics.pickle')
+
 def try_baseline(df,demographic):
+    """
+    Takes a patient df and the demographic and logically goes through to get values regardless of how many rows there are.
+
+    :returns: demographic value
+    """
     if df.shape[0]==0:
-        print('Error: no demographics')
+        print('Error: no demographics') #error catch
     elif df.shape[0]==1:
         result = df[demographic].values[0]
     else:
@@ -442,22 +370,11 @@ def try_baseline(df,demographic):
             result = df[demographic].values[0]
     return result
 
-def reduce_pt_rows(df):
-    df_unique = df_pt_med_cond[col].groupby(df_pt_med_cond[col]).unique()
-    if df_unique.shape[0]==0:
-        print('pt:{} col:{} size:{}'.format(patient,col,df_unique.shape[0]))
-    elif df_unique.shape[0]==1:
-        pass
-    else:
-        #pt 70 and 1172 are under this. both had a dx which was not dx on second (angina, htn)
-        df_unique = df_pt_med_cond[col].groupby(df_pt_med_cond[col]).sum()
-        print('pt:{} col:{} size:{}'.format(patient,col,df_unique.shape[0]))
-
 def organize_demographics():
     """
-    Takes in demographics pickle and sx score pickle. It goes through and condenses demographics, medical conditions, medical treatment, asa, smoking, labs, 
+    Takes in demographics pickle and sx score pickle. It goes through and condenses demographics, medical conditions, medical treatment, asa, smoking, labs, etc.
 
-
+    :returns: df_demographics_out.pickle
     """
     print('organize_demographics function is running...')
     df_demo = pd.read_pickle('S:\ERAS\df_demographics.pickle') #reads in demographics df
@@ -795,21 +712,35 @@ def combine_all():
     pd.to_pickle(df_output,'S:\ERAS\cr_preprocess.pickle')
     return df_output
 
+def reduce_pt_rows(df):
+    """
+    Not in main program. Just a tool to look into patient data.
+
+    :return: None
+    """
+    df_unique = df_pt_med_cond[col].groupby(df_pt_med_cond[col]).unique()
+    if df_unique.shape[0]==0:
+        print('pt:{} col:{} size:{}'.format(patient,col,df_unique.shape[0]))
+    elif df_unique.shape[0]==1:
+        pass
+    else:
+        #pt 70 and 1172 are under this. both had a dx which was not dx on second (angina, htn)
+        df_unique = df_pt_med_cond[col].groupby(df_pt_med_cond[col]).sum()
+        print('pt:{} col:{} size:{}'.format(patient,col,df_unique.shape[0]))
+
 def main():
+    """Runs the entire pipeline."""
     # project_modules.load_and_pickle(path_in='S:/ERAS/',file_in='CR_all.xlsx',file_out='cr_df.pickle',sheetname='CR_all')
     # pickle_comp()
-    # sx_complications()
-    project_modules.load_and_pickle(path_in='S:/ERAS/',file_in='complications_dictionary_table.xlsx',sheetname='Sheet1')
+    # project_modules.load_and_pickle(path_in='S:/ERAS/',file_in='complications_dictionary_table.xlsx',sheetname='Sheet1')
     # max_complication()
     # pickle_surgeries()
-    # pickle_sx_dict()
-    # create_sx_dict()
+    create_sx_dict()
     organize_sx()
     pickle_demographics()
     organize_demographics()
     readmit_los()
     combine_all()
-    # testing()
 
 if __name__ == '__main__':
 	main()
