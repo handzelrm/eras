@@ -2,9 +2,21 @@ import pandas as pd
 import numpy as np
 import datetime
 from sklearn import preprocessing, tree, svm
-from sklearn.model_selection import LeaveOneOut, train_test_split
+from sklearn.model_selection import LeaveOneOut, train_test_split, StratifiedKFold
 from sklearn.metrics import f1_score
 from scipy.optimize import minimize
+from itertools import product
+import time
+import multiprocessing
+
+#used to add parent directory and reload module
+import os
+parent_dir = os.path.join(os.getcwd(),os.pardir)
+import sys
+sys.path.append(parent_dir)
+import project_modules
+import importlib
+importlib.reload(project_modules)
 
 def split_eras(raw_pickle,processed_pickle,eras_dt):
     """
@@ -164,6 +176,10 @@ def impute(df):
 
 #f score ranges from 0 to 1
 def loocv(X,y,clf):
+    """
+
+
+    """
     loo = LeaveOneOut()
     loo.get_n_splits(X)
     score_list = []
@@ -175,22 +191,142 @@ def loocv(X,y,clf):
         y_predict.append(clf.predict(X_test)[0])
         score_list.append(clf.score(X_test,y_test))
     f1 = f1_score(y,y_predict)
-    print(f1)
+    # print('f1 score: {0:.4f}'.format(f1))
     return f1
+
+def kfoldcv(X,y,clf):
+    """
+
+    logic is differnt for kfolds comared to loovc so need to fix this.
+
+    """
+    kfold = StratifiedKFold(n_splits=10)
+    score_list = []
+    y_predict = []
+    y_test_list = []
+    for train_index,test_index in kfold.split(X,y):
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        clf = clf.fit(X_train,y_train)
+        y_predict = y_predict + list(clf.predict(X_test))
+        y_test_list = y_test_list + list(y_test)
+        score_list.append(clf.score(X_test,y_test))
+    f1 = f1_score(y_test_list,y_predict)
+    # print('f1 score: {0:.4f}'.format(f1))
+    return f1
+
+def zerofold(X,y,clf):
+    """
+    Will do a zero fold cross validation. Used instead of leave one out or kfold cross validation.
+    Splits data into 70/30 train/test
+
+    :param X: training inputs
+    :param y: training outputs
+    :param clf: classifier i.e. decsions tree or svm object
+
+    :returns: 
+    """
+
+    X_train, X_test, y_train, y_test = train_test_split(X,y[0],test_size=0.3,random_state=42)
+    
+
+
 
 
 def test(x,df_y):
     return sum(100.0*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0)
 
-def train_test_split():
-    pass
+def loop_rec(args):
+    """
+    Uses the product module within itertools to create a list of tuples that can be passed into another functions parameters. Allos for either lists or dictionaries to be used.
+
+    :param args: can be a value, list, list of lists or a list of dictionaries
+    :returns: a list of tuples
+    """
+    if type(args) == list:
+        return list(product(*args))
+    elif type(args) == dict:
+        return list(product(*args.values())) #need to loop through values
+
+
+
+def int_maximize(fxn, args, X, y, clf):
+    # result_list = []
+    if type(clf) == type(tree.DecisionTreeClassifier()):
+        # print('max_depth{}. min_sample{}'.format(args[0],args[1]))
+        clf = tree.DecisionTreeClassifier(max_depth=args[0],min_samples_leaf=args[1])
+        # result_list.append(fxn(X,y,clf))
+        return fxn(X,y,clf)
+    elif type(clf) == type(svm.SVC()):
+        clf = svm.SVC(C=args[0],kernel='poly',gamma='auto',cache_size=1000,class_weight='balanced')
+        return fxn(X,y,clf)        
+    else:
+        print('Still have not added this classifier')
+        return None
+    # return max(result_list)
+
+
+def find_best_parameters(fxn, parameter_dict, X, y, clf):
+    parameter_list = loop_rec(parameter_dict)
+    f1_score = 0
+    f1_params = []
+    percentage = 0
+    for cnt, parameters in enumerate(parameter_list):
+        project_modules.running_fxn(20, percentage, cnt, len(parameter_list))
+        new_f1 = int_maximize(fxn, parameters, X, y, clf)
+        if new_f1 > f1_score:
+            print(new_f1, parameters)
+            f1_score = new_f1
+            f1_params = parameters
+
+
+    print('final score: {}\nfinal parameters:{}'.format(f1_score, f1_params))
+    return f1_score, f1_params
+    
+            
+
+
+# def fxn_to_minimize(x,X,y,clf):
+#     # print(x,X,y,clf)
+#     if type(clf) == type(tree.DecisionTreeClassifier()):
+#         clf = tree.DecisionTreeClassifier(max_depth=3,min_samples_leaf=int(x[0]))
+#         # print(x[0])
+#         loocv(X,y,clf)
+#     else:
+#         pass
+    # clf = tree.DecisionTreeClassifier(max_depth=y,min_samples_leaf=x)
+
+
 
 def main():
     pts_E, pts_NE, df_E, df_NE = split_eras('S:\ERAS\cr_df.pickle','S:\ERAS\cr_preprocess.pickle',datetime.datetime(2014,7,1,0,0))
     X, y = impute(df_E)
-    clf = tree.DecisionTreeClassifier(max_depth=2,min_samples_leaf=5)
-    loocv(X,y[0],clf)
+    X_train, X_test, y_train, y_test = train_test_split(X,y[0],test_size=0.3,random_state=42)
+    # clf = tree.DecisionTreeClassifier(max_depth=5,min_samples_leaf=5)
+    # clf = tree.DecisionTreeClassifier()
+    clf = svm.SVC()
 
+    # test_list = [[1,2,3],[2,5,2]]
+    # test_dict = {'foo':range(1,10),'bar':range(1,10)}
+    # print(loop_rec(test_list))
+
+    # print(int_maximize(loocv, None, X_train, y_train,clf))
+    tree_parameter_dict = {'max_depth':range(1,10),'min_sample_leaf':range(1,10)}
+    svm_parameter_dict = {'c':[0.1]}
+
+    # find_best_parameters(loocv, tree_parameter_dict, X_train, y_train, clf)
+    # find_best_parameters(kfoldcv, tree_parameter_dict, X_train, y_train, clf)
+    # find_best_parameters(kfoldcv, svm_parameter_dict, X_train, y_train, clf)
+    find_best_parameters(loocv,svm_parameter_dict,X_train,y_train,clf)
+
+    # simple_minimize(loocv,{'min_sample_leaf':[1,1000]},X_train,y_train,clf)
+
+
+    # loocv(X_train,y_train,clf)
+
+    # fxn_to_minimize(1,X,y,clf)
+    # result = minimize(fun=fxn_to_minimize,x0=1,args=(X_train,y_train,tree.DecisionTreeClassifier()),bounds=(1,None),method='L-BFGS-B')
+    # print(result)
     # x0 = range(0,10)
     # res = minimize(test,x0,method='nelder-mead')
     # print(res)
