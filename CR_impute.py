@@ -67,7 +67,7 @@ def onehot_data(df):
     :returns: onehotencoded dataframe
     """
 
-    value_dict =  {'race':[0,1,2,3,4,5,6],'primary_dx':[0,1,2,3,4,5,6],'second_dx':[],'sex':[0,1,2],'ethnicity':[0,1,2],'ho_smoking':[0,1,2,3]}
+    value_dict =  {'race':[0,1,2,3,4,5,6],'primary_dx':[0,1,2,3,4,5,6],'second_dx':[],'sex':[0,1,2],'ethnicity':[0,1,2],'ho_smoking':[0,1,2,3],'surgery_mode':[0,1,2,3,4]}
 
     # enc = preprocessing.OneHotEncoder()
     for col in df.columns:
@@ -188,6 +188,15 @@ def impute(df):
     df.primary_dx.replace(8,4,inplace=True) #colonic inertia
     df.primary_dx.replace(9,5,inplace=True) #other
 
+    #surgery mode nan will be 4
+    df.surgery_mode.replace(1,0,inplace=True) #open
+    df.surgery_mode.replace(6,0,inplace=True) #lap converted
+    df.surgery_mode.replace(2,1,inplace=True) #hand-assisted
+    df.surgery_mode.replace(3,2,inplace=True) #laparoscopic
+    df.surgery_mode.replace(4,2,inplace=True) #robotic
+    df.surgery_mode.replace(5,2,inplace=True) #laparscopic/robotic
+    df.surgery_mode.replace(7,3,inplace=True) #TA TME
+
 
 
     # df.second_dx.replace(0,,inplace=True) #non-crc cancer
@@ -303,7 +312,7 @@ def impute(df):
     X = df_X.as_matrix()
     # y_readmit = df_y['po_sx_readmission'].as_matrix()
     # y_complication = df_y['comp_score'].as_matrix()
-    # y = [y_readmit,y_complication]
+    # y = [y_readmit,y_cocmplication]
     y = df_y.as_matrix()
 
     return X, y
