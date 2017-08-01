@@ -3,11 +3,14 @@ import numpy as np
 import datetime
 from sklearn import preprocessing, tree, svm
 from sklearn.model_selection import LeaveOneOut, train_test_split, StratifiedKFold
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_recall_curve, roc_curve, auc, average_precision_score
 from scipy.optimize import minimize
 from itertools import product
 import time
 import multiprocessing
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+plt.style.use('ggplot')
 
 #used to add parent directory and reload module
 import os
@@ -26,7 +29,6 @@ def split_eras(raw_pickle,processed_pickle,eras_dt):
     :param raw_pickle: raw data pickle
     :param processed_pickle: cleaned up data pickle
     :param eras_dt: eras implementation datetime
-
     :returns: eras, non-eras patient lists and eras and non-eras dataframes
     """
     df_raw = pd.read_pickle(raw_pickle) #raw data pickle
@@ -49,7 +51,6 @@ def impute_strategy(df,strategy):
 
     :param df: dataframe with columns to impute
     :param strategy: i.e. mean and mode
-
     :returns: imputed dataframe
     """
     fill_NaN = preprocessing.Imputer(missing_values=np.nan, strategy=strategy, axis=0)
@@ -65,40 +66,69 @@ def onehot_data(df):
     :param df: dataframe  to be onehot encoded
     :returns: onehotencoded dataframe
     """
-    enc = preprocessing.OneHotEncoder()
-    for col in df.columns:
 
-        num_of_values = list(df[col].unique())
-        num_of_values.sort()
+    value_dict =  {'race':[0,1,2,3,4,5,6],'primary_dx':[0,1,2,3,4,5,6],'second_dx':[],'sex':[0,1,2],'ethnicity':[0,1,2],'ho_smoking':[0,1,2,3]}
+
+    # enc = preprocessing.OneHotEncoder()
+    for col in df.columns:
+        print(col)
+        num_of_values = len(df[col].unique())
+        # print(num_of_values)
+        # num_of_values = max(df[col].unique())
+        num_of_values = len(value_dict[col])
+        # num_of_values.sort()
         reshaped_df = df[col].values.reshape(-1,1)
-        process = preprocessing.OneHotEncoder()
+        # print(reshaped_df)
+        # process = preprocessing.OneHotEncoder()
 
         #primary_dx 15
         #second_dx 15
         #sex 3
         #These have to hard coded in place because some values do not show up in both sets. Which will allow cross evaluation if needed
-        if col=='primary_dx':
-            # unique_list = [0.0, 2.0, 3.0, 4.0, 11.0, 10.0, 9.0, 7.0, 16.0, 1.0, 6.0, 5.0]
-            process = preprocessing.OneHotEncoder(n_values=18)
-            num_of_values = range(18)
-        elif col=='second_dx':
-            pass
-            process = preprocessing.OneHotEncoder(n_values=18)
-            num_of_values = range(18)
-        elif col=='sex':
-            process = preprocessing.OneHotEncoder(n_values=4)
-            num_of_values = range(4)
-        else:
-            pass
+        # if col=='primary_dx':
+        #     # unique_list = [0.0, 2.0, 3.0, 4.0, 11.0, 10.0, 9.0, 7.0, 16.0, 1.0, 6.0, 5.0]
+        #     process = preprocessing.OneHotEncoder(n_values=18)
+        #     num_of_values = range(18)
+        # elif col=='second_dx':
+        #     pass
+        #     process = preprocessing.OneHotEncoder(n_values=18)
+        #     num_of_values = range(18)
+        # elif col=='sex':
+        #     process = preprocessing.OneHotEncoder(n_values=4)
+        #     num_of_values = range(4)
+        # else:
+        #     pass
 
+        # if col=='primary_dx':
+        #     # unique_list = [0.0, 2.0, 3.0, 4.0, 11.0, 10.0, 9.0, 7.0, 16.0, 1.0, 6.0, 5.0]
+        #     # num_of_values = len(df[col].unique())
+        #     # print(num_of_values)
+        #     # print(df[col].unique())
+        #     process = preprocessing.OneHotEncoder(n_values=num_of_values)
+        #     # print(process)
+        #     # num_of_values = range(18)
+        # elif col=='second_dx':
+        #     pass
+        #     process = preprocessing.OneHotEncoder(n_values=18)
+        #     # num_of_values = range(18)
+        # elif col=='sex':
+        #     process = preprocessing.OneHotEncoder(n_values=4)
+        #     # num_of_values = range(4)
+        # else:
+        #     pass
+
+        # print(col,num_of_values,df[col].unique())
+        # process = preprocessing.OneHotEncoder(n_values=num_of_values)
+        process = preprocessing.OneHotEncoder(num_of_values)
         df_onehot = process.fit_transform(reshaped_df)   
         df_onehot = pd.DataFrame(df_onehot.toarray())
 
         col_list = []
 
-        for i in num_of_values:
+        for i in range(num_of_values):
             col_list.append('{}_{}'.format(col,i))
 
+        # print(col)
         df_onehot.columns = col_list
         df_onehot.index = df.index
 
@@ -107,19 +137,119 @@ def onehot_data(df):
       
     return df
 
+def combine_similar_columns(df):
+    """
+    Will take one hot encoded data and combine all of the columns by taking the max value for each patient.
+
+    :param df: dataframe with all columns that need to consolidated
+    :returns: 
+    """
+    df.sum()
+
+    # return df_out
+
 def impute(df):
     """
     Imputes missing values. Categories/lists are hardcoded: Missing as value, not missing at random, mean and mode.
 
-
+    :param df: Dataframe to be imputed
+    :returns: X, y
     """
-    missing_as_value = ['primary_dx','race','second_dx','sex','ethnicity','ho_smoking','sx_diagnosis','sx_facility','surgery_mode'] #set max+1
-    not_missing_at_random = ['currenct_medtreatment___14','currenct_medtreatment___15','currenct_medtreatment___16','currenct_medtreatment___17','currenct_medtreatment___18','currenct_medtreatment___19','currenct_medtreatment___20','currenct_medtreatment___21','currenct_medtreatment___22','currenct_medtreatment___23','med_condition___1','med_condition___10','med_condition___11','med_condition___12','med_condition___13','med_condition___2','med_condition___3','med_condition___4','med_condition___5','med_condition___6','med_condition___7','med_condition___8','med_condition___9','cea_value','crp_value','no_ab_sx','no_total_attacks','sx_diversion','surgeon_a___1','surgeon_a___2','surgeon_a___3','surgeon_a___4','surgeon_a___5',] #set to default 0
+    #removed second dx, may need to check if okay
+    #removed sx_facility
+    #removed sx_diagnosis
+    missing_as_value = ['primary_dx','race','sex','ethnicity','ho_smoking','surgery_mode'] #set max+1
+    # not_missing_at_random = ['currenct_medtreatment___14','currenct_medtreatment___15','currenct_medtreatment___16','currenct_medtreatment___17','currenct_medtreatment___18','currenct_medtreatment___19','currenct_medtreatment___20','currenct_medtreatment___21','currenct_medtreatment___22','currenct_medtreatment___23','med_condition___1','med_condition___10','med_condition___11','med_condition___12','med_condition___13','med_condition___2','med_condition___3','med_condition___4','med_condition___5','med_condition___6','med_condition___7','med_condition___8','med_condition___9','cea_value','crp_value','no_ab_sx','no_total_attacks','sx_diversion','surgeon_a___1','surgeon_a___2','surgeon_a___3','surgeon_a___4','surgeon_a___5',] #set to default 0
+    not_missing_at_random = ['currenct_medtreatment___14','currenct_medtreatment___15','currenct_medtreatment___16','currenct_medtreatment___17','currenct_medtreatment___18','currenct_medtreatment___19','currenct_medtreatment___20','currenct_medtreatment___21','currenct_medtreatment___22','currenct_medtreatment___23','cardiac','renal','copd','diabetes','radiation','hypertension','transplant','cea_value','crp_value','no_ab_sx','no_total_attacks','sx_diversion','surgeon_a___1','surgeon_a___2','surgeon_a___3','surgeon_a___4','surgeon_a___5',] #set to default 0
+    
     impute_mean = ['age','albumin_value','alp_value','bmi','bun_value','creatinine_value','glucose_value','hgb_value','plt_value','prealbumin_value','wbc_value','sx_ebl','sx_length'] #imput mean
     impute_mode = ['asa_class'] #imput mode
     #impute zero: cea_value, crp_value
 
     output = ['po_sx_readmission','comp_score'] #,'sx_po_stay' removed bc nans and not main question
+
+    #Colorectal polpys/cancer
+    df.primary_dx.replace(0,0,inplace=True) #rectal cancer
+    df.primary_dx.replace(1,0,inplace=True) #rectal polpys
+    df.primary_dx.replace(2,0,inplace=True) #colon cancer
+    df.primary_dx.replace(3,0,inplace=True) #colon polyps
+    df.primary_dx.replace(10,0,inplace=True) #rectal mass
+    df.primary_dx.replace(11,0,inplace=True) #colon mass
+    df.primary_dx.replace(14,0,inplace=True) #recurrent colon cancer with mets
+    df.primary_dx.replace(16,0,inplace=True) #recurrent rectal cancer with mets
+    #inflammatrory bowel dz
+    df.primary_dx.replace(4,1,inplace=True) #crohns dz
+    df.primary_dx.replace(6,1,inplace=True) #ulcerative colitis
+    #ischemic colitis
+    df.primary_dx.replace(5,2,inplace=True) #ischemic colitis
+    #diveticultiis
+    df.primary_dx.replace(7,3,inplace=True) #diverticulitis
+    #colonic inertia
+    df.primary_dx.replace(8,4,inplace=True) #colonic inertia
+    df.primary_dx.replace(9,5,inplace=True) #other
+
+
+
+    # df.second_dx.replace(0,,inplace=True) #non-crc cancer
+    # df.second_dx.replace(1,,inplace=True) #divertitculitis
+    # df.second_dx.replace(2,,inplace=True) #polyp/polyposis
+    # df.second_dx.replace(3,,inplace=True) #ulcerative colitis
+    # df.second_dx.replace(4,,inplace=True) #crohns dz
+    # df.second_dx.replace(5,,inplace=True) #stoma reversal
+    # df.second_dx.replace(6,,inplace=True) #fistula
+    # df.second_dx.replace(7,,inplace=True) #other
+
+    med_cond_dict = {'cardiac':['med_condition___1','med_condition___2','med_condition___3','med_condition___4'],'renal':['med_condition___5'],'copd':['med_condition___6'],'diabetes':['med_condition___7','med_condition___9','med_condition___11','med_condition___12'],'hypertension':['med_condition___8'],'radiation':['med_condition___10'],'transplant':['med_condition___13']}
+    
+    #loops through dictionary and gets max value for each group (1 if present) and returns array to dictionary which is used to create another dataframe
+    for i in med_cond_dict:
+        # med_cond_dict[i] = df[med_cond_dict[i]].max(axis=1).values #gets max values in list format
+        df[i] = df[med_cond_dict[i]].max(axis=1).values #gets max values in list format
+    # med_cond_dict['patient_id'] = list(df.patient_id) #adds patient id for merge
+    # temp_df = pd.DataFrame(med_cond_dict) #creates temporary dataframe for merge
+
+
+    df = df.drop(['med_condition___10', 'med_condition___7', 'med_condition___9', 'med_condition___11', 'med_condition___12', 'med_condition___13', 'med_condition___5', 'med_condition___8', 'med_condition___1', 'med_condition___2', 'med_condition___3', 'med_condition___4', 'med_condition___6'],1) #removes extra columns
+
+
+
+
+        # #if only one value in dictionary no need to combine
+        # if len(med_cond_dict[i]) == 1:
+        #     print(i)
+        #     # print(df[med_cond_dict[i]].head())
+        #     # print(df[med_cond_dict[i]].values)
+        #     med_cond_dict[i] = df[med_cond_dict[i]].max(axis=1).values
+        #     # print(med_cond_dict[i])
+        #     # print(test.head())
+        #     # print(len(med_cond_dict[i]))
+        #     print(len(med_cond_dict[i]))
+        # else:
+        #     # print(df[med_cond_dict[i]].head())
+        #     # print('max')
+        #     med_cond_dict[i] = list(df[med_cond_dict[i]].max(axis=1))
+        #     print(len(med_cond_dict[i]))
+
+    
+
+
+
+    """
+    Medical conditions
+    group1: afib, angina, cardiac pacemaker, chf, prior mi, pvd, stroke
+    group2: ckd
+    group3: copd
+    group4 dm
+    group5 htn
+    group6 prior radiation
+    group7 transplant patient
+
+
+
+    """
+
+
+    # print(np.sort(df.primary_dx.unique()))
 
     #groups Clavien-Dindo groups
     df.comp_score.replace(1,1,inplace=True)    
@@ -132,9 +262,9 @@ def impute(df):
     df.ho_smoking.replace(14.,0,inplace=True) #never
     df.ho_smoking.replace(15.,1,inplace=True) #current
     df.ho_smoking.replace(16.,2,inplace=True) #quit <1yr
-    df.ho_smoking.replace(17.,3,inplace=True) #quit <5yr
-    df.ho_smoking.replace(18.,4,inplace=True) #quit >10yr
-    df.ho_smoking.replace(19.,5,inplace=True) #quit
+    df.ho_smoking.replace(17.,2,inplace=True) #quit <5yr
+    df.ho_smoking.replace(18.,2,inplace=True) #quit >10yr
+    df.ho_smoking.replace(19.,2,inplace=True) #quit
 
     #redefines asa class values to make sense
     df.asa_class.replace(14.,1,inplace=True)
@@ -152,6 +282,9 @@ def impute(df):
 
     #Missing at random so set to max+1 value
     for col in missing_as_value:
+        #ethnicity has value of 2 if unknown i.e. nan
+        if col == 'ethnicity':
+            df[col].fillna(2,inplace=True)
         df[col].fillna(df[col].max()+1,inplace=True)
 
     #impute mean and mode for respective groups
@@ -168,37 +301,68 @@ def impute(df):
     # print(df_y.columns[df_y.isnull().any()].tolist())
 
     X = df_X.as_matrix()
-    y_readmit = df_y['po_sx_readmission'].as_matrix()
-    y_complication = df_y['comp_score'].as_matrix()
-    y = [y_readmit,y_complication]
+    # y_readmit = df_y['po_sx_readmission'].as_matrix()
+    # y_complication = df_y['comp_score'].as_matrix()
+    # y = [y_readmit,y_complication]
+    y = df_y.as_matrix()
 
     return X, y
 
 #f score ranges from 0 to 1
 def loocv(X,y,clf):
     """
+    Leave one out cross validation. Uses sklearn modules.
 
-
+    :param X: training input parameters
+    :param y: training results
+    :param clf: classifer i.e. decision tree object
+    :returns: f1 score
     """
     loo = LeaveOneOut()
     loo.get_n_splits(X)
     score_list = []
     y_predict = []
+    y_proba = []
+    y_proba_test = []
+    # y_proba_1 = []
+    # y_proba_2 = []
     for train_index,test_index in loo.split(X):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
         clf = clf.fit(X_train,y_train)
         y_predict.append(clf.predict(X_test)[0])
         score_list.append(clf.score(X_test,y_test))
+        y_proba.append(clf.predict_proba(X_test)[0][0])
+        y_proba_test.append(y_test)
+        # y_proba.append(test)
+        # print(test)
+        # test = clf.predict_proba(X_test)
+        # test = np.append(test,clf.predict_proba(X_test))
+        # test.append(clf.predict_proba(X_test))
+        # print(test)
+        # print(clf.predict_proba(X_test)+clf.predict_proba(X_test))
+        # return
+        # y_proba_1.append(clf.predict_proba(X_test)[0])
+        # y_proba_2.append(clf.predict_proba(X_test)[1])
+    # print(y_proba_1)
+    print(y_proba)
+    print(len(y_proba))
+    print(len(y_proba_test))
+
+    plot_roc(y_proba_test,y_proba)
+    # f1 = f1_score(y,y_predict)
     f1 = f1_score(y,y_predict)
     # print('f1 score: {0:.4f}'.format(f1))
     return f1
 
 def kfoldcv(X,y,clf):
     """
+    K-fold cross validation. Uses sklearn modules.
 
-    logic is differnt for kfolds comared to loovc so need to fix this.
-
+    :param X: training input parameters
+    :param y: training results
+    :param clf: classifer i.e. decision tree object
+    :returns: f1 score
     """
     kfold = StratifiedKFold(n_splits=10)
     score_list = []
@@ -223,15 +387,82 @@ def zerofold(X,y,clf):
     :param X: training inputs
     :param y: training outputs
     :param clf: classifier i.e. decsions tree or svm object
+    :returns: f1 score
 
-    :returns: 
+    Output the precision recall graph and the ROC graph and send them to me. Feel free to train and test on the full 70% split of your data. Do not worry about cross validation for now. 
     """
+    precision = {}
+    recall = {}
+    average_precision = {}
+    X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.3,random_state=42)
 
-    X_train, X_test, y_train, y_test = train_test_split(X,y[0],test_size=0.3,random_state=42)
+    clf = clf.fit(X_train,y_train)
+    y_predict = clf.predict(X_test)
+    y_score = clf.predict_proba(X_test)
+    # print('score {}'.format(y_score))
     
+    for i in [0,1]:
+        precision[i], recall[i], _ = precision_recall_curve(y_test,y_score[:,i])
+        average_precision[i] = average_precision_score(y_test, y_score[:, i])
 
+    print('y_test = {}'.format(y_test))
+    print('y_pred = {}'.format(y_predict))
+    # plot_recall_precision(recall,precision,average_precision)
+    plot_roc(y_test,y_score[:,1])
+    # print(clf.score(X_test,y_test))
 
+    f1 = f1_score(y_test,y_predict)
+    
+    # plt.clf()
+    # plt.plot(precision,recall)
+    # plt.show()
 
+    # print(precision,recall,thresholds)
+    print(f1)
+    return f1
+
+def plot_recall_precision(recall,precision,average_precision):
+    """
+    Will plot the precision/recall graph and report the AUC. Loops through each of the dictionary items.
+
+    :param recall: can be a dictionary
+    :param precisison: can be a dictionary
+    :param precision: can be a dictionary
+    :returns: precision/recall plot
+    """
+    
+    for i in recall:
+
+        plt.clf() #clears figure
+        plt.plot(recall[i], precision[i], color='navy',
+                 label='Precision-Recall curve')
+        plt.xlabel('Recall')
+        plt.ylabel('Precision')
+        plt.ylim([0.0, 1.05])
+        plt.xlim([0.0, 1.0])
+        plt.title('Precision-Recall example: AUC={0:0.2f}'.format(average_precision[i]))
+        plt.legend(loc="lower left")
+        plt.show()
+
+def plot_roc(y,y_scores):
+    """
+    Will plot the ROC curve. Loops through each of the dictionary items.
+
+    :param y: can be a dictionary
+    :param y_score: can be a dictionary
+    :returns: ROC curve
+    """
+    fpr, tpr, _ = roc_curve(y, y_scores, pos_label=1)
+    plt.clf()
+    plt.plot(fpr,tpr, color='navy',
+             label='ROC Curve')
+    plt.xlabel('FPR')
+    plt.ylabel('TPR')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    # plt.title('Precision-Recall example: AUC={0:0.2f}'.format(average_precision[i]))
+    plt.legend(loc="lower left")
+    plt.show()
 
 def test(x,df_y):
     return sum(100.0*(x[1:]-x[:-1]**2.0)**2.0 + (1-x[:-1])**2.0)
@@ -251,6 +482,11 @@ def loop_rec(args):
 
 
 def int_maximize(fxn, args, X, y, clf):
+    """
+
+
+    :returns: result of the function that was inputed
+    """
     # result_list = []
     if type(clf) == type(tree.DecisionTreeClassifier()):
         # print('max_depth{}. min_sample{}'.format(args[0],args[1]))
@@ -267,6 +503,10 @@ def int_maximize(fxn, args, X, y, clf):
 
 
 def find_best_parameters(fxn, parameter_dict, X, y, clf):
+    """
+
+
+    """
     parameter_list = loop_rec(parameter_dict)
     f1_score = 0
     f1_params = []
@@ -274,6 +514,7 @@ def find_best_parameters(fxn, parameter_dict, X, y, clf):
     for cnt, parameters in enumerate(parameter_list):
         project_modules.running_fxn(20, percentage, cnt, len(parameter_list))
         new_f1 = int_maximize(fxn, parameters, X, y, clf)
+        # print(new_f1)
         if new_f1 > f1_score:
             print(new_f1, parameters)
             f1_score = new_f1
@@ -299,25 +540,34 @@ def find_best_parameters(fxn, parameter_dict, X, y, clf):
 
 
 def main():
+    """
+
+
+    """
     pts_E, pts_NE, df_E, df_NE = split_eras('S:\ERAS\cr_df.pickle','S:\ERAS\cr_preprocess.pickle',datetime.datetime(2014,7,1,0,0))
     X, y = impute(df_E)
-    X_train, X_test, y_train, y_test = train_test_split(X,y[0],test_size=0.3,random_state=42)
+    # print('X{}, y{}'.format(X.shape,y.shape))
+    # print(y)
+    X_train, X_test, y_train, y_test = train_test_split(X,y[:,0],test_size=0.3,random_state=42) #y[0] = readmits
+    # print('Train{}, Test{}'.format(X_train.shape,X_test.shape))
+    # print(109/(109+256))
     # clf = tree.DecisionTreeClassifier(max_depth=5,min_samples_leaf=5)
-    # clf = tree.DecisionTreeClassifier()
-    clf = svm.SVC()
+    clf = tree.DecisionTreeClassifier()
+    # clf = svm.SVC()
 
     # test_list = [[1,2,3],[2,5,2]]
     # test_dict = {'foo':range(1,10),'bar':range(1,10)}
     # print(loop_rec(test_list))
 
     # print(int_maximize(loocv, None, X_train, y_train,clf))
-    tree_parameter_dict = {'max_depth':range(1,10),'min_sample_leaf':range(1,10)}
-    svm_parameter_dict = {'c':[0.1]}
-
+    tree_parameter_dict = {'max_depth':[3],'min_sample_leaf':[2]}
+    # svm_parameter_dict = {'c':[0.1]}
+    # print(y_train)
     # find_best_parameters(loocv, tree_parameter_dict, X_train, y_train, clf)
     # find_best_parameters(kfoldcv, tree_parameter_dict, X_train, y_train, clf)
     # find_best_parameters(kfoldcv, svm_parameter_dict, X_train, y_train, clf)
-    find_best_parameters(loocv,svm_parameter_dict,X_train,y_train,clf)
+    # find_best_parameters(loocv,svm_parameter_dict,X_train,y_train,clf)
+    # find_best_parameters(zerofold,tree_parameter_dict,X_train,y_train,clf)
 
     # simple_minimize(loocv,{'min_sample_leaf':[1,1000]},X_train,y_train,clf)
 
