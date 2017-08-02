@@ -8,6 +8,8 @@ from scipy.optimize import minimize
 from itertools import product
 import time
 import multiprocessing
+from scipy import interp
+from sklearn.ensemble import BaggingClassifier, RandomForestClassifier
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 plt.style.use('ggplot')
@@ -333,6 +335,9 @@ def loocv(X,y,clf):
     y_predict = []
     y_proba = []
     y_proba_test = []
+    y_test_list = []
+    tpr = 0.0
+    fpr = np.linspace(0,1,100)
     # y_proba_1 = []
     # y_proba_2 = []
     for train_index,test_index in loo.split(X):
@@ -342,7 +347,12 @@ def loocv(X,y,clf):
         y_predict.append(clf.predict(X_test)[0])
         score_list.append(clf.score(X_test,y_test))
         y_proba.append(clf.predict_proba(X_test)[0][0])
-        y_proba_test.append(y_test)
+        # y_proba = clf.predict_proba(X_test)
+        y_test_list.append(y_test)
+        # fpr,tpr,_ = roc_curve(y_test,y_proba[:,1])
+        # mean_tpr += interp(mean_fpr,fpr,tpr)
+        # mean_tpr[0] = 0.0
+        # roc_auc = auc(fpr,tpr)
         # y_proba.append(test)
         # print(test)
         # test = clf.predict_proba(X_test)
@@ -353,16 +363,24 @@ def loocv(X,y,clf):
         # return
         # y_proba_1.append(clf.predict_proba(X_test)[0])
         # y_proba_2.append(clf.predict_proba(X_test)[1])
-    # print(y_proba_1)
-    print(y_proba)
-    print(len(y_proba))
-    print(len(y_proba_test))
 
-    plot_roc(y_proba_test,y_proba)
+
+    # print(y_proba_1)
+    # mean_tpr /= kfold.get_n_splits(X,y)
+    # mean_tpr[-1] = 1.0
+    # mean_auc = auc(mean_fpr,mean_tpr)
+    # print(y_proba)
+    # print(len(y_proba))
+    # print(len(y_test_list))
+    # print(y_test)
+    fpr,tpr,_ = roc_curve(y_test_list,y_proba)
+    mean_auc = auc(fpr,tpr)
+    # print(mean_auc)
+    # plot_roc(y_proba_test,y_proba)
     # f1 = f1_score(y,y_predict)
     f1 = f1_score(y,y_predict)
     # print('f1 score: {0:.4f}'.format(f1))
-    return f1
+    return f1, mean_auc, fpr, tpr
 
 def kfoldcv(X,y,clf):
     """
@@ -373,20 +391,39 @@ def kfoldcv(X,y,clf):
     :param clf: classifer i.e. decision tree object
     :returns: f1 score
     """
+    # print(X.shape)
     kfold = StratifiedKFold(n_splits=10)
     score_list = []
     y_predict = []
     y_test_list = []
+    mean_tpr = 0.0
+    mean_fpr = np.linspace(0,1,100)
     for train_index,test_index in kfold.split(X,y):
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
         clf = clf.fit(X_train,y_train)
         y_predict = y_predict + list(clf.predict(X_test))
         y_test_list = y_test_list + list(y_test)
+        y_proba = clf.predict_proba(X_test)
         score_list.append(clf.score(X_test,y_test))
+        fpr,tpr,_ = roc_curve(y_test,y_proba[:,1])
+        mean_tpr += interp(mean_fpr,fpr,tpr)
+        mean_tpr[0] = 0.0
+        roc_auc = auc(fpr,tpr)
+        # plt.plot(fpr,tpr)
+    # plot_roc(y_test,y_score[:,1])
+    mean_tpr /= kfold.get_n_splits(X,y)
+    mean_tpr[-1] = 1.0
+    mean_auc = auc(mean_fpr,mean_tpr)
+    # plt.plot(mean_fpr,mean_tpr)
+    # plt.show()
+    # print(mean_auc)
     f1 = f1_score(y_test_list,y_predict)
     # print('f1 score: {0:.4f}'.format(f1))
-    return f1
+    return f1, mean_auc, mean_fpr, mean_tpr
+
+def bag_it():
+    bagging = BaggingClassifier()
 
 def zerofold(X,y,clf):
     """
@@ -414,10 +451,10 @@ def zerofold(X,y,clf):
         precision[i], recall[i], _ = precision_recall_curve(y_test,y_score[:,i])
         average_precision[i] = average_precision_score(y_test, y_score[:, i])
 
-    print('y_test = {}'.format(y_test))
-    print('y_pred = {}'.format(y_predict))
+    # print('y_test = {}'.format(y_test))
+    # print('y_pred = {}'.format(y_predict))
     # plot_recall_precision(recall,precision,average_precision)
-    plot_roc(y_test,y_score[:,1])
+    # plot_roc(y_test,y_score[:,1])
     # print(clf.score(X_test,y_test))
 
     f1 = f1_score(y_test,y_predict)
@@ -429,6 +466,50 @@ def zerofold(X,y,clf):
     # print(precision,recall,thresholds)
     print(f1)
     return f1
+
+
+def allfold(X,y,clf):
+    """
+    Will do a zero fold cross validation. Used instead of leave one out or kfold cross validation.
+    Splits data into 70/30 train/test
+
+    :param X: training inputs
+    :param y: training outputs
+    :param clf: classifier i.e. decsions tree or svm object
+    :returns: f1 score
+
+    Output the precision recall graph and the ROC graph and send them to me. Feel free to train and test on the full 70% split of your data. Do not worry about cross validation for now. 
+    """
+    precision = {}
+    recall = {}
+    average_precision = {}
+    # X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.3,random_state=42)
+
+    clf = clf.fit(X,y)
+    y_predict = clf.predict(X)
+    y_score = clf.predict_proba(X)
+    # print('score {}'.format(y_score))
+    
+    for i in [0,1]:
+        precision[i], recall[i], _ = precision_recall_curve(y,y_score[:,i])
+        average_precision[i] = average_precision_score(y, y_score[:, i])
+
+    print('y = {}'.format(y))
+    print('y_pred = {}'.format(y_predict))
+    # plot_recall_precision(recall,precision,average_precision)
+    plot_roc(y,y_score[:,1])
+    # print(clf.score(X_test,y_test))
+
+    f1 = f1_score(y,y_predict)
+    
+    # plt.clf()
+    # plt.plot(precision,recall)
+    # plt.show()
+
+    # print(precision,recall,thresholds)
+    print(f1)
+    return f1
+
 
 def plot_recall_precision(recall,precision,average_precision):
     """
@@ -518,19 +599,32 @@ def find_best_parameters(fxn, parameter_dict, X, y, clf):
     """
     parameter_list = loop_rec(parameter_dict)
     f1_score = 0
+    best_auc = 0.5
     f1_params = []
+    auc_params = []
     percentage = 0
     for cnt, parameters in enumerate(parameter_list):
         project_modules.running_fxn(20, percentage, cnt, len(parameter_list))
-        new_f1 = int_maximize(fxn, parameters, X, y, clf)
+        new_f1,new_auc,fpr,tpr = int_maximize(fxn, parameters, X, y, clf)
         # print(new_f1)
         if new_f1 > f1_score:
-            print(new_f1, parameters)
+            # print(new_f1, parameters)
             f1_score = new_f1
             f1_params = parameters
+        # print(abs(new_auc-0.5),abs(best_auc-0.5))
+        if abs(new_auc-0.5) > abs(best_auc-0.5):
+            print(new_auc, parameters)
+            best_auc = new_auc
+            auc_params = parameters
+            plt.plot(fpr,tpr)
+            plt.title('AUC:{}, Parameters{}'.format(new_auc,parameters))
+            plt.show()
 
 
-    print('final score: {}\nfinal parameters:{}'.format(f1_score, f1_params))
+    if best_auc < 0.5:
+        best_auc += 0.5
+    print('max f1 score: {}\nparameters:{}'.format(f1_score, f1_params))
+    print('max AUC: {}\nparameters:{}'.format(best_auc, auc_params))
     return f1_score, f1_params
     
             
@@ -561,7 +655,6 @@ def main():
     # print('Train{}, Test{}'.format(X_train.shape,X_test.shape))
     # print(109/(109+256))
     # clf = tree.DecisionTreeClassifier(max_depth=5,min_samples_leaf=5)
-    clf = tree.DecisionTreeClassifier()
     # clf = svm.SVC()
 
     # test_list = [[1,2,3],[2,5,2]]
@@ -569,14 +662,17 @@ def main():
     # print(loop_rec(test_list))
 
     # print(int_maximize(loocv, None, X_train, y_train,clf))
-    tree_parameter_dict = {'max_depth':[3],'min_sample_leaf':[2]}
-    # svm_parameter_dict = {'c':[0.1]}
+    tree_parameter_dict = {'max_depth':range(2,15),'min_sample_leaf':range(2,15)}
+    forest_parameter_dict = {'n_estimators':[10]}
+    svm_parameter_dict = {'c':[0.1]}
     # print(y_train)
-    # find_best_parameters(loocv, tree_parameter_dict, X_train, y_train, clf)
-    # find_best_parameters(kfoldcv, tree_parameter_dict, X_train, y_train, clf)
+    # find_best_parameters(kfoldcv, tree_parameter_dict, X_train, y_train, tree.DecisionTreeClassifier())
+    find_best_parameters(loocv, tree_parameter_dict, X_train, y_train, tree.DecisionTreeClassifier())
     # find_best_parameters(kfoldcv, svm_parameter_dict, X_train, y_train, clf)
     # find_best_parameters(loocv,svm_parameter_dict,X_train,y_train,clf)
     # find_best_parameters(zerofold,tree_parameter_dict,X_train,y_train,clf)
+    # find_best_parameters(allfold,tree_parameter_dict,X_train,y_train,clf)
+    # find_best_parameters(kfoldcv,forest_parameter_dict, X_train, y_train,RandomForestClassifier())
 
     # simple_minimize(loocv,{'min_sample_leaf':[1,1000]},X_train,y_train,clf)
 
@@ -589,6 +685,16 @@ def main():
     # x0 = range(0,10)
     # res = minimize(test,x0,method='nelder-mead')
     # print(res)
+
+
+    """
+    1-15 for both and 10 fold
+    max f1 score of 0.2 with parameters of 4,6
+    max auc of 0.7238 with paremeters of 5,7
+
+
+
+    """
 
 if __name__ == '__main__':
     main()
