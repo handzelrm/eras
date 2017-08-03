@@ -3,10 +3,9 @@
 ## Questions
 - Still have issue with anastomotic resection if not otherwise specified (ignore for now)
 
-## To Do
-- fix redundancy with transpose
-- finish updating the surgery groups once questions are anwsered
-- update processing to change surgeries from ranks to categories
+## Recently Fixed
+- Updated surgery groups
+- Changed surgeries from ranked to onehotencoded categories
 
 ## Surgery Groups
 ### Group 1
@@ -127,6 +126,7 @@
 - asa_class
 
 ## Data Outputs
-- surgical readmission (y/n)
-- post-op stay (days) - available, but not included now
-- Clavien-Dindo Score (0-5)
+### surgical readmission (y/n)
+### post-op stay (days) - available, but not included now
+### Clavien-Dindo Score (0-5)
+- remapping where 1->1, 2->2, 3,4,5->3
