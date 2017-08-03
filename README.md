@@ -44,16 +44,44 @@
 
 ## Data Inputs
 ### Impute missing as value
-- primary_dx
-- race
-- second_dx
-- sex
-- ethnicity
-- ho_smoking
-- sx_diagnosis
-- sx_facility
-- surgery_mode
+#### primary_dx:
+- Group 0: rectal cancer, retal polpys, colon cancer, colon polyps, rectal mass, colon mass, recurrent colon cancer with mets, recurrent rectal cancer with mets
+- Group 1: Crohns disease, ulcerative colitis
+- Group 2: Ischemic Colitis
+- Group 3: Diverticulitis
+- Group 4: colonic inertia
+- Group 5: other
+- Group 6: nan
+#### race
+#### second_dx
+#### sex
+#### ethnicity
+#### ho_smoking
+#### sx_diagnosis
+#### sx_facility
+#### surgery_mode
+- Group 0: open, lap converted
+- Group 1: hand-assisted
+- Group 2: laparoscopic, roboitc, laparscopic/robotic
+- Group 3: TA TME
+- Group 4: nan
 ### Impute missing not at random
+#### cardiac
+med_condion___1 - afib
+med_condion___2
+med_condion___3
+med_condion___4
+#### renal
+med_condion___5
+#### copd
+med_condion___6
+#### diabetes
+med_condion___
+med_condion___
+#### 
+#### 
+#### 
+#### 
 - currenct_medtreatment___14
 - currenct_medtreatment___15
 - currenct_medtreatment___16
