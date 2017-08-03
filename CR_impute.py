@@ -73,7 +73,7 @@ def onehot_data(df):
 
     # enc = preprocessing.OneHotEncoder()
     for col in df.columns:
-        print(col)
+        # print(col)
         num_of_values = len(df[col].unique())
         # print(num_of_values)
         # num_of_values = max(df[col].unique())
@@ -585,7 +585,10 @@ def int_maximize(fxn, args, X, y, clf):
         return fxn(X,y,clf)
     elif type(clf) == type(svm.SVC()):
         clf = svm.SVC(C=args[0],kernel='poly',gamma='auto',cache_size=1000,class_weight='balanced')
-        return fxn(X,y,clf)        
+        return fxn(X,y,clf)
+    elif type(clf) == type(RandomForestClassifier()):
+        clf = RandomForestClassifier(n_estimators=args[0],max_features=args[1],max_depth=None,min_samples_split=2,random_state=0,n_jobs=-1)
+        return fxn(X,y,clf)
     else:
         print('Still have not added this classifier')
         return None
@@ -663,11 +666,14 @@ def main():
 
     # print(int_maximize(loocv, None, X_train, y_train,clf))
     tree_parameter_dict = {'max_depth':range(2,15),'min_sample_leaf':range(2,15)}
-    forest_parameter_dict = {'n_estimators':[10]}
+    forest_parameter_dict = {'n_estimators':[1000],'max_features':[18]}
     svm_parameter_dict = {'c':[0.1]}
     # print(y_train)
     # find_best_parameters(kfoldcv, tree_parameter_dict, X_train, y_train, tree.DecisionTreeClassifier())
-    find_best_parameters(loocv, tree_parameter_dict, X_train, y_train, tree.DecisionTreeClassifier())
+    # find_best_parameters(loocv, tree_parameter_dict, X_train, y_train, tree.DecisionTreeClassifier())
+    # find_best_parameters(loocv, forest_parameter_dict, X_train, y_train, RandomForestClassifier())
+    find_best_parameters(kfoldcv, forest_parameter_dict, X_train, y_train, RandomForestClassifier())
+
     # find_best_parameters(kfoldcv, svm_parameter_dict, X_train, y_train, clf)
     # find_best_parameters(loocv,svm_parameter_dict,X_train,y_train,clf)
     # find_best_parameters(zerofold,tree_parameter_dict,X_train,y_train,clf)
