@@ -199,18 +199,7 @@ def impute(df):
     df.surgery_mode.replace(5,2,inplace=True) #laparscopic/robotic
     df.surgery_mode.replace(7,3,inplace=True) #TA TME
 
-
-
-    # df.second_dx.replace(0,,inplace=True) #non-crc cancer
-    # df.second_dx.replace(1,,inplace=True) #divertitculitis
-    # df.second_dx.replace(2,,inplace=True) #polyp/polyposis
-    # df.second_dx.replace(3,,inplace=True) #ulcerative colitis
-    # df.second_dx.replace(4,,inplace=True) #crohns dz
-    # df.second_dx.replace(5,,inplace=True) #stoma reversal
-    # df.second_dx.replace(6,,inplace=True) #fistula
-    # df.second_dx.replace(7,,inplace=True) #other
-
-    med_cond_dict = {'cardiac':['med_condition___1','med_condition___2','med_condition___3','med_condition___4'],'renal':['med_condition___5'],'copd':['med_condition___6'],'diabetes':['med_condition___7','med_condition___9','med_condition___11','med_condition___12'],'hypertension':['med_condition___8'],'radiation':['med_condition___10'],'transplant':['med_condition___13']}
+    med_cond_dict = {'cardiac':['med_condition___1','med_condition___2','med_condition___3','med_condition___4','med_condition___9','med_condition___11','med_condition___12'],'renal':['med_condition___5'],'copd':['med_condition___6'],'diabetes':['med_condition___7'],'hypertension':['med_condition___8'],'radiation':['med_condition___10'],'transplant':['med_condition___13']}
     
     #loops through dictionary and gets max value for each group (1 if present) and returns array to dictionary which is used to create another dataframe
     for i in med_cond_dict:
@@ -221,46 +210,6 @@ def impute(df):
 
 
     df = df.drop(['med_condition___10', 'med_condition___7', 'med_condition___9', 'med_condition___11', 'med_condition___12', 'med_condition___13', 'med_condition___5', 'med_condition___8', 'med_condition___1', 'med_condition___2', 'med_condition___3', 'med_condition___4', 'med_condition___6'],1) #removes extra columns
-
-
-
-
-        # #if only one value in dictionary no need to combine
-        # if len(med_cond_dict[i]) == 1:
-        #     print(i)
-        #     # print(df[med_cond_dict[i]].head())
-        #     # print(df[med_cond_dict[i]].values)
-        #     med_cond_dict[i] = df[med_cond_dict[i]].max(axis=1).values
-        #     # print(med_cond_dict[i])
-        #     # print(test.head())
-        #     # print(len(med_cond_dict[i]))
-        #     print(len(med_cond_dict[i]))
-        # else:
-        #     # print(df[med_cond_dict[i]].head())
-        #     # print('max')
-        #     med_cond_dict[i] = list(df[med_cond_dict[i]].max(axis=1))
-        #     print(len(med_cond_dict[i]))
-
-    
-
-
-
-    """
-    Medical conditions
-    group1: afib, angina, cardiac pacemaker, chf, prior mi, pvd, stroke
-    group2: ckd
-    group3: copd
-    group4 dm
-    group5 htn
-    group6 prior radiation
-    group7 transplant patient
-
-
-
-    """
-
-
-    # print(np.sort(df.primary_dx.unique()))
 
     #groups Clavien-Dindo groups
     df.comp_score.replace(1,1,inplace=True)    
@@ -296,10 +245,11 @@ def impute(df):
         #ethnicity has value of 2 if unknown i.e. nan
         if col == 'ethnicity':
             df[col].fillna(2,inplace=True)
-        df[col].fillna(df[col].max()+1,inplace=True)
+        else:
+            df[col].fillna(df[col].max()+1,inplace=True)
 
     #impute mean and mode for respective groups
-    df[impute_mean] = impute_strategy(df[impute_mean],'median')
+    df[impute_mean] = impute_strategy(df[impute_mean],'mean')
     df[impute_mode] = impute_strategy(df[impute_mode],'most_frequent')
 
     df = df.drop(['patient_id','hba1c_value','sx_admission_date_a'],1) #removes extra columns
