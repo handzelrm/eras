@@ -42,7 +42,8 @@
 - Lavage and Drain Placement
 
 ## Data Inputs
-### Impute missing as value
+### Impute missing as value 
+- replace nan with max value +1 and will be onehotencoded
 #### primary_dx:
 - Group 0: rectal cancer, retal polpys, colon cancer, colon polyps, rectal mass, colon mass, recurrent colon cancer with mets, recurrent rectal cancer with mets
 - Group 1: Crohns disease, ulcerative colitis
@@ -53,11 +54,18 @@
 - Group 6: nan
 #### race
 #### second_dx
+- was removed because it was redundant with primary diagnosis categories and medical history
 #### sex
 #### ethnicity
 #### ho_smoking
+- Group 0: never smoked
+- Group 1: current smoker
+- Group 2: quit<1yr, quit<5yrs, quit>10yrs, quit
+- Group 3: nan
 #### sx_diagnosis
+- removed as it was redundant
 #### sx_facility
+- removed as only two facilities and unlikely relevant
 #### surgery_mode
 - Group 0: open, lap converted
 - Group 1: hand-assisted
