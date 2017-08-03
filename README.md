@@ -66,50 +66,43 @@
 - Group 3: TA TME
 - Group 4: nan
 ### Impute missing not at random
-#### cardiac
-med_condion___1 - afib
-med_condion___2
-med_condion___3
-med_condion___4
-#### renal
-med_condion___5
-#### copd
-med_condion___6
-#### diabetes
-med_condion___
-med_condion___
-#### 
-#### 
-#### 
-#### 
-- currenct_medtreatment___14
-- currenct_medtreatment___15
-- currenct_medtreatment___16
-- currenct_medtreatment___17
-- currenct_medtreatment___18
-- currenct_medtreatment___19
-- currenct_medtreatment___20
-- currenct_medtreatment___21
-- currenct_medtreatment___22
-- currenct_medtreatment___23
-- med_condition___1
-- med_condition___10
-- med_condition___11
-- med_condition___12
-- med_condition___13
-- med_condition___2
-- med_condition___3
-- med_condition___4
-- med_condition___5
-- med_condition___6
-- med_condition___7
-- med_condition___8
-- med_condition___9
+#### Cardiac
+- med_condition___1 (afib)
+- med_condition___2 (Angina)
+- med_condition___3 (Cardiac Pacemaker)
+- med_condition___4 (CHF)
+- med_condition___9 (Previous MI)
+#### Renal
+- med_condion___5 (Chronic Renal Failure)
+#### COPD
+- med_condion___6 (COPD)
+#### Diabetes
+- med_condion___7 (Diabetes)
+#### Hypertension
+- med_condion___8 (Hypertension)
+#### Radiation
+- med_condion___10 (Radiation)
+#### Transplant
+- med_condion___13 (Transplant)
+#### Medication Treatement
+- currenct_medtreatment___14 (Biologic for cancer)
+- currenct_medtreatment___15 (Biologic for IBD)
+- currenct_medtreatment___16 (Chemo)
+- currenct_medtreatment___17 (Coumadin)
+- currenct_medtreatment___18 (Heparin)
+- currenct_medtreatment___19 (IV Steroids)
+- currenct_medtreatment___20 (Oral Steroids)
+- currenct_medtreatment___21 (Topical Steroids)
+- currenct_medtreatment___22 (Plavix)
+- currenct_medtreatment___23 (Radiation)
+#### Labs
 - cea_value
 - crp_value
-- no_ab_sx
-- no_total_attacks
-- sx_diversion
+#### Other
+- no_ab_sx (number of abdominal surgeries)
+- no_total_attacks (number of diverticular attacks)
+- sx_diversion (surgical diversion)
+#### Surgeon
 - surgeon_a___1
 - surgeon_a___2
 - surgeon_a___3
